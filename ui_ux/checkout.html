@@ -1,0 +1,986 @@
+{% extends "base.html" %}
+
+{% block title %}Thanh toán đơn hàng | Evern — Fashion AI Stylist{% endblock %}
+
+{% block content %}
+<style>
+  /* ==========================================================================
+     CHECKOUT COMPONENT SPECIFIC STYLING (EVERN. PREMIUM FINISH)
+     ========================================================================== */
+  .checkout-mode-tabs-wrap {
+    margin-bottom: 18px;
+  }
+
+  .checkout-mode-tabs {
+    display: flex;
+    background: #F3F4F6;
+    border-radius: var(--radius-md, 12px);
+    padding: 4px;
+    gap: 4px;
+    border: 1px solid #E5E7EB;
+  }
+
+  .checkout-mode-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    color: #4B5563;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .checkout-mode-tab:hover {
+    color: #111111;
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  .checkout-mode-tab.active {
+    background: #111111;
+    color: #FFFFFF;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+  }
+
+  .checkout-mode-tab .tab-icon {
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .checkout-mode-tab.active .tab-icon.lightning {
+    color: #F59E0B;
+  }
+
+  /* Mode Information Banner */
+  .checkout-mode-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    animation: fadeIn 200ms ease;
+  }
+
+  .checkout-mode-banner.buy-now-mode {
+    background: #FFF7ED;
+    border: 1px solid #FED7AA;
+    color: #9A3412;
+  }
+
+  .checkout-mode-banner.cart-mode {
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
+    color: #166534;
+  }
+
+  .checkout-mode-banner i {
+    font-size: 14px;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Cart Select All Bar */
+  .checkout-cart-select-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 12px;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+
+  /* Custom Checkbox */
+  .custom-chk-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .custom-chk-label input[type="checkbox"] {
+    display: none;
+  }
+
+  .chk-custom-box {
+    width: 17px;
+    height: 17px;
+    border: 1.8px solid #9CA3AF;
+    border-radius: 4px;
+    background: #FFFFFF;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 150ms ease;
+    flex-shrink: 0;
+  }
+
+  .custom-chk-label input[type="checkbox"]:checked+.chk-custom-box {
+    background: #111111;
+    border-color: #111111;
+  }
+
+  .custom-chk-label input[type="checkbox"]:checked+.chk-custom-box::after {
+    content: '✓';
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  /* Item Row Styling */
+  .checkout-item-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #FFFFFF;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 10px;
+    transition: all 180ms ease;
+    margin-bottom: 10px;
+  }
+
+  .checkout-item-row.unselected {
+    opacity: 0.45;
+    background: #F9FAFB;
+    border-color: #F3F4F6;
+  }
+
+  .checkout-item-thumb {
+    width: 58px;
+    height: 70px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #F3F4F6;
+    flex-shrink: 0;
+  }
+
+  .checkout-item-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .checkout-item-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .checkout-item-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #111111;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .checkout-item-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .meta-tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    background: #F3F4F6;
+    border-radius: 4px;
+    color: #4B5563;
+  }
+
+  .meta-tag.badge-mode-buynow {
+    background: #FEF3C7;
+    color: #B45309;
+    border: 1px solid #FDE68A;
+  }
+
+  .checkout-item-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .checkout-stepper {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    background: #FFFFFF;
+  }
+
+  .btn-step {
+    border: none;
+    background: transparent;
+    width: 24px;
+    height: 22px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-step:hover {
+    background: #F3F4F6;
+  }
+
+  .step-num {
+    min-width: 22px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #111111;
+  }
+
+  .btn-remove-item {
+    border: none;
+    background: transparent;
+    color: #9CA3AF;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: color 150ms;
+  }
+
+  .btn-remove-item:hover {
+    color: #DC2626;
+  }
+
+  .checkout-item-price {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111111;
+    text-align: right;
+    white-space: nowrap;
+    margin-left: auto;
+  }
+
+  /* Empty state */
+  .checkout-empty-box {
+    text-align: center;
+    padding: 28px 16px;
+    background: #FAF9F7;
+    border: 1px dashed #D1D5DB;
+    border-radius: 12px;
+  }
+
+  .checkout-empty-icon {
+    font-size: 34px;
+    margin-bottom: 8px;
+  }
+
+  .checkout-empty-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #111111;
+    margin: 0 0 6px 0;
+  }
+
+  .checkout-empty-desc {
+    font-size: 13px;
+    color: #6B7280;
+    margin: 0 0 16px 0;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+
+<div class="checkout-page-wrapper">
+  <div class="checkout-container">
+    <!-- TOP BREADCRUMB BAR -->
+    <div class="checkout-breadcrumb-bar">
+      <a href="/" class="brand-logo" style="font-size: 24px; margin-right: 18px;">
+        Evern<span class="brand-dot">.</span>
+      </a>
+      <div class="checkout-breadcrumbs">
+        <a href="/products">Sản phẩm</a>
+        <span class="bc-arrow">›</span>
+        <span class="bc-active" id="checkoutBcTitle">Thanh toán Mua ngay</span>
+      </div>
+    </div>
+
+    <!-- MAIN CHECKOUT 2-COLUMN LAYOUT -->
+    <div class="checkout-grid">
+      <!-- LEFT COLUMN: SHIPPING & PAYMENT DETAILS -->
+      <div class="checkout-left-col">
+        <form id="checkoutForm" onsubmit="return false;">
+          <!-- SECTION 1: THÔNG TIN GIAO HÀNG -->
+          <div class="checkout-section-header">
+            <h2 class="checkout-section-title">Thông tin giao hàng</h2>
+            {% if current_user %}
+            <span class="checkout-user-badge">
+              <i class="fa-regular fa-circle-check"></i> Đang đặt với tài khoản <strong>@{{ current_user.username
+                }}</strong>
+            </span>
+            {% else %}
+            <div class="checkout-login-hint">
+              Đã có tài khoản? <a href="/login?next=/checkout">Đăng nhập</a> để tự động điền thông tin.
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="checkout-form-group">
+            <label for="customerName" class="checkout-label">Họ và tên <span class="req">*</span></label>
+            <input type="text" id="customerName" class="checkout-input" placeholder="Ví dụ: Hoàng Nam"
+              value="{{ user_info.full_name if user_info and user_info.full_name else '' }}" required>
+          </div>
+
+          <div class="checkout-form-row">
+            <div class="checkout-form-group">
+              <label for="customerEmail" class="checkout-label">Email</label>
+              <input type="email" id="customerEmail" class="checkout-input" placeholder="email@vidu.com"
+                value="{{ user_info.email if user_info and user_info.email else '' }}">
+            </div>
+            <div class="checkout-form-group">
+              <label for="customerPhone" class="checkout-label">Số điện thoại <span class="req">*</span></label>
+              <input type="tel" id="customerPhone" class="checkout-input" placeholder="0912 345 678"
+                value="{{ user_info.phone if user_info and user_info.phone else '' }}" required>
+            </div>
+          </div>
+
+          <div class="checkout-form-group">
+            <label for="shippingAddress" class="checkout-label">Địa chỉ nhận hàng <span class="req">*</span></label>
+            <input type="text" id="shippingAddress" class="checkout-input"
+              placeholder="Số nhà, tên ngõ, tên đường phố..."
+              value="{{ user_info.address if user_info and user_info.address else '' }}" required>
+          </div>
+
+          <div class="checkout-form-group">
+            <label for="shippingCity" class="checkout-label">Phường/Xã, Quận/Huyện, Tỉnh/Thành phố <span
+                class="req">*</span></label>
+            <div class="checkout-input-icon-wrap">
+              <i class="fa-solid fa-location-dot checkout-field-icon"></i>
+              <input type="text" id="shippingCity" class="checkout-input with-icon"
+                placeholder="Ví dụ: Phường Dịch Vọng, Quận Cầu Giấy, Hà Nội"
+                value="{% if user_info and (user_info.city or user_info.ward or user_info.district) %}{{ (user_info.ward ~ ', ' if user_info.ward else '') ~ (user_info.district ~ ', ' if user_info.district else '') ~ (user_info.city or '') }}{% endif %}"
+                required>
+            </div>
+          </div>
+
+          <div class="checkout-form-group">
+            <label for="orderNotes" class="checkout-label">Ghi chú đơn hàng (không bắt buộc)</label>
+            <textarea id="orderNotes" class="checkout-textarea" rows="3"
+              placeholder="Ví dụ: Giao hàng trong giờ hành chính, gọi trước khi đến...">{{ user_info.notes if user_info and user_info.notes else '' }}</textarea>
+          </div>
+
+          <!-- SECTION 2: PHƯƠNG THỨC THANH TOÁN -->
+          <div class="checkout-section-header" style="margin-top: 32px;">
+            <h2 class="checkout-section-title">Phương thức thanh toán</h2>
+          </div>
+
+          <div class="payment-methods-box">
+            <!-- COD OPTION (DEFAULT) -->
+            <label class="payment-method-option active" id="optCOD">
+              <div class="pm-radio-wrap">
+                <input type="radio" name="paymentMethod" value="COD" checked>
+                <div class="pm-custom-radio"></div>
+              </div>
+              <div class="pm-content">
+                <div class="pm-title-row">
+                  <span class="pm-title">Thanh toán khi nhận hàng (COD)</span>
+                  <span class="pm-badge">Khuyên dùng</span>
+                </div>
+                <p class="pm-desc">Quý khách thanh toán tiền mặt trực tiếp cho nhân viên bưu tá khi nhận và kiểm tra
+                  kiện hàng.</p>
+              </div>
+            </label>
+
+            <!-- VIETQR / BANK TRANSFER OPTION -->
+            <label class="payment-method-option" id="optQR">
+              <div class="pm-radio-wrap">
+                <input type="radio" name="paymentMethod" value="VietQR">
+                <div class="pm-custom-radio"></div>
+              </div>
+              <div class="pm-content">
+                <div class="pm-title-row">
+                  <span class="pm-title">Chuyển khoản VietQR / Mobile Banking</span>
+                </div>
+                <p class="pm-desc">Quét mã QR qua ứng dụng ngân hàng hoặc ví điện tử (MoMo, ZaloPay) để thanh toán tức
+                  thì.</p>
+              </div>
+            </label>
+          </div>
+
+          <!-- FOOTER RETURN LINK -->
+          <div class="checkout-back-link-row">
+            <a href="javascript:void(0)" id="btnCheckoutBack" class="btn-checkout-back">
+              <i class="fa-solid fa-angle-left"></i>
+              <span id="btnCheckoutBackText">Tiếp tục xem sản phẩm</span>
+            </a>
+          </div>
+        </form>
+      </div>
+
+      <!-- RIGHT COLUMN: ORDER SUMMARY & NOTICE -->
+      <div class="checkout-right-col">
+        <div class="checkout-summary-card">
+          <!-- MODE SWITCH TABS: Mua riêng vs Giỏ hàng -->
+          <div class="checkout-mode-tabs-wrap">
+            <div class="checkout-mode-tabs">
+              <button type="button" class="checkout-mode-tab" id="tabBuyNow" onclick="switchCheckoutMode('buy_now')">
+
+                <span>Mua riêng </span>
+              </button>
+              <button type="button" class="checkout-mode-tab" id="tabCart" onclick="switchCheckoutMode('cart')">
+
+                <span>Giỏ hàng (<span id="checkoutCartCount">0</span>)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- SUMMARY HEADER & MODE TITLE -->
+          <div class="summary-header">
+            <h3 class="summary-title" id="summaryTitleText">Đơn hàng mua ngay (<span id="checkoutItemCount">0</span>
+              món)</h3>
+          </div>
+
+          <!-- DYNAMIC MODE NOTICE BANNER -->
+          <div class="checkout-mode-banner" id="checkoutModeBanner"></div>
+
+          <!-- SELECT ALL BAR (FOR CART MODE ONLY) -->
+          <div class="checkout-cart-select-bar" id="checkoutCartSelectBar" style="display: none;">
+            <label class="custom-chk-label">
+              <input type="checkbox" id="chkSelectAllCart" checked onchange="toggleSelectAllCart(this.checked)">
+              <span class="chk-custom-box"></span>
+              <span class="chk-text">Chọn tất cả (<span id="selectedCountDisplay">0</span>/<span
+                  id="totalCartCountDisplay">0</span> món)</span>
+            </label>
+          </div>
+
+          <!-- ITEMS LIST (Populated dynamically) -->
+          <div class="checkout-items-list" id="checkoutItemsList"></div>
+
+          <!-- COST BREAKDOWN -->
+          <div class="checkout-totals-box">
+            <div class="totals-row">
+              <span class="totals-label">Tạm tính:</span>
+              <span class="totals-val" id="checkoutSubtotal">0đ</span>
+            </div>
+            <div class="totals-row">
+              <span class="totals-label">Phí vận chuyển:</span>
+              <span class="totals-val text-green">Miễn phí</span>
+            </div>
+            <div class="totals-row total-highlight">
+              <span class="total-label-big">Tổng cộng:</span>
+              <div class="total-val-wrap">
+                <span class="currency-prefix">VND</span>
+                <span class="total-val-big" id="checkoutGrandTotal">0đ</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- NOTICE CALLOUT BOX (REQUIRED BY USER REFERENCE) -->
+          <div class="checkout-confirmation-notice">
+            <div class="notice-icon-circle">
+              <i class="fa-solid fa-bell"></i>
+            </div>
+            <div class="notice-text">
+              Chúng tôi sẽ <strong>XÁC NHẬN</strong> đơn hàng bằng <strong>TIN NHẮN SMS</strong> hoặc <strong>GỌI
+                ĐIỆN</strong>. Quý khách vui lòng kiểm tra <strong>TIN NHẮN</strong> hoặc <strong>NGHE MÁY</strong> ngay
+              khi đặt hàng thành công và <strong>CHỜ NHẬN HÀNG</strong>.
+            </div>
+          </div>
+
+          <!-- SUBMIT CTA BUTTON -->
+          <button type="button" class="btn-complete-order" id="btnCompleteOrder">
+            <span id="btnCompleteOrderText">Hoàn tất đơn hàng</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT LOGIC FOR CHECKOUT PAGE -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const itemsListEl = document.getElementById('checkoutItemsList');
+    const itemCountEl = document.getElementById('checkoutItemCount');
+    const subtotalEl = document.getElementById('checkoutSubtotal');
+    const grandTotalEl = document.getElementById('checkoutGrandTotal');
+    const btnSubmit = document.getElementById('btnCompleteOrder');
+    const btnSubmitText = document.getElementById('btnCompleteOrderText');
+    const summaryTitleText = document.getElementById('summaryTitleText');
+    const bannerEl = document.getElementById('checkoutModeBanner');
+    const selectBarEl = document.getElementById('checkoutCartSelectBar');
+    const tabBuyNow = document.getElementById('tabBuyNow');
+    const tabCart = document.getElementById('tabCart');
+    const tabCartCount = document.getElementById('checkoutCartCount');
+    const bcTitle = document.getElementById('checkoutBcTitle');
+    const btnBack = document.getElementById('btnCheckoutBack');
+    const btnBackText = document.getElementById('btnCheckoutBackText');
+
+    // Track state
+    let currentMode = 'buy_now'; // 'buy_now' or 'cart'
+    let selectedCartIndices = new Set();
+
+    const formatVND = (num) => {
+      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num || 0);
+    };
+
+    // Payment radio options change styling
+    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        document.querySelectorAll('.payment-method-option').forEach(opt => opt.classList.remove('active'));
+        const activeOpt = radio.closest('.payment-method-option');
+        if (activeOpt) activeOpt.classList.add('active');
+      });
+    });
+
+    // Initialize selectedCartIndices to include all items in Cart
+    const resetCartSelection = () => {
+      selectedCartIndices.clear();
+      if (typeof Cart !== 'undefined') {
+        Cart.getItems().forEach((_, idx) => selectedCartIndices.add(idx));
+      }
+    };
+
+    // Determine initial mode from URL or data availability
+    const initMode = () => {
+      const params = new URLSearchParams(window.location.search);
+      const modeParam = params.get('mode');
+      const buyNowItem = typeof Cart !== 'undefined' ? Cart.getBuyNowItem() : null;
+      const cartItems = typeof Cart !== 'undefined' ? Cart.getItems() : [];
+
+      resetCartSelection();
+
+      if (modeParam === 'buy_now') {
+        currentMode = 'buy_now';
+      } else if (modeParam === 'cart') {
+        currentMode = 'cart';
+      } else {
+        if (buyNowItem) {
+          currentMode = 'buy_now';
+        } else if (cartItems.length > 0) {
+          currentMode = 'cart';
+        } else {
+          currentMode = 'buy_now';
+        }
+      }
+    };
+
+    // Mode Switcher Handler
+    window.switchCheckoutMode = (mode) => {
+      currentMode = mode;
+      const url = new URL(window.location);
+      url.searchParams.set('mode', mode);
+      window.history.replaceState({}, '', url);
+      renderCheckout();
+    };
+
+    // Cart selection toggles
+    window.toggleSelectAllCart = (isChecked) => {
+      if (typeof Cart === 'undefined') return;
+      const items = Cart.getItems();
+      selectedCartIndices.clear();
+      if (isChecked) {
+        items.forEach((_, idx) => selectedCartIndices.add(idx));
+      }
+      renderCheckout();
+    };
+
+    window.toggleCartItemSelect = (idx, isChecked) => {
+      if (isChecked) {
+        selectedCartIndices.add(idx);
+      } else {
+        selectedCartIndices.delete(idx);
+      }
+      renderCheckout();
+    };
+
+    // Quantity helpers
+    window.updateBuyNowStep = (delta) => {
+      if (typeof Cart === 'undefined') return;
+      const item = Cart.getBuyNowItem();
+      if (!item) return;
+      const newQty = Math.max(1, (item.quantity || 1) + delta);
+      Cart.updateBuyNowQty(newQty);
+      renderCheckout();
+    };
+
+    window.removeBuyNowItem = () => {
+      if (typeof Cart === 'undefined') return;
+      Cart.clearBuyNowItem();
+      renderCheckout();
+    };
+
+    window.updateCartStep = (idx, delta) => {
+      if (typeof Cart === 'undefined') return;
+      const items = Cart.getItems();
+      if (items[idx]) {
+        const newQty = (items[idx].quantity || 1) + delta;
+        Cart.updateQty(idx, newQty);
+        renderCheckout();
+      }
+    };
+
+    window.removeCartItem = (idx) => {
+      if (typeof Cart === 'undefined') return;
+      Cart.removeItem(idx);
+      // Adjust indices
+      resetCartSelection();
+      renderCheckout();
+    };
+
+    // Core Render Function
+    const renderCheckout = () => {
+      if (typeof Cart === 'undefined') return;
+
+      const buyNowItem = Cart.getBuyNowItem();
+      const cartItems = Cart.getItems();
+      const cartTotalCount = Cart.getCount();
+
+      // Update Tab UI
+      tabBuyNow.classList.toggle('active', currentMode === 'buy_now');
+      tabCart.classList.toggle('active', currentMode === 'cart');
+      tabCartCount.textContent = cartTotalCount;
+
+      if (currentMode === 'buy_now') {
+        // BREADCRUMB & BACK LINK
+        if (bcTitle) bcTitle.textContent = 'Thanh toán Mua ngay (1 sản phẩm)';
+        if (btnBackText) btnBackText.textContent = 'Tiếp tục xem sản phẩm';
+        if (btnBack) {
+          btnBack.onclick = () => window.location.href = '/products';
+        }
+
+        // BANNER & SELECT BAR
+        selectBarEl.style.display = 'none';
+        bannerEl.className = 'checkout-mode-banner buy-now-mode';
+        bannerEl.innerHTML = `
+        <i class="fa-solid fa-bolt"></i>
+        <div>
+          <strong>Chế độ Mua ngay:</strong> Đang thanh toán riêng cho sản phẩm này. Giỏ hàng của bạn (${cartTotalCount} món) vẫn được bảo toàn nguyên vẹn.
+        </div>
+      `;
+
+        if (!buyNowItem) {
+          summaryTitleText.innerHTML = `Đơn hàng mua ngay (<span id="checkoutItemCount">0</span> món)`;
+          itemsListEl.innerHTML = `
+          <div class="checkout-empty-box">
+            <div class="checkout-empty-icon"></div>
+            <h4 class="checkout-empty-title">Chưa có sản phẩm Mua ngay</h4>
+            <p class="checkout-empty-desc">Bạn chưa chọn sản phẩm nào để thanh toán trực tiếp.</p>
+            <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+              <a href="/products" class="btn-primary" style="font-size: 12.5px; padding: 8px 16px;">
+                Khám phá sản phẩm
+              </a>
+              ${cartItems.length > 0 ? `
+                <button type="button" class="btn-secondary" onclick="switchCheckoutMode('cart')" style="font-size: 12.5px; padding: 8px 16px;">
+                  Xem Giỏ hàng (${cartTotalCount})
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+          subtotalEl.textContent = '0đ';
+          grandTotalEl.textContent = '0đ';
+          btnSubmit.disabled = true;
+          btnSubmit.style.opacity = '0.5';
+          btnSubmit.style.cursor = 'not-allowed';
+          return;
+        }
+
+        const qty = buyNowItem.quantity || 1;
+        const totalAmount = buyNowItem.price * qty;
+
+        summaryTitleText.innerHTML = `Đơn hàng mua ngay (1 món • ${qty} chiếc)`;
+        if (itemCountEl) itemCountEl.textContent = qty;
+
+        itemsListEl.innerHTML = `
+        <div class="checkout-item-row">
+          <div class="checkout-item-thumb">
+            <img src="${buyNowItem.image_url || '/static/images/placeholder.jpg'}" alt="${buyNowItem.name}" onerror="this.onerror=null; this.src='/static/images/placeholder.jpg';">
+          </div>
+          <div class="checkout-item-info">
+            <div class="checkout-item-title" title="${buyNowItem.name}">${buyNowItem.name}</div>
+            <div class="checkout-item-meta">
+              <span class="meta-tag badge-mode-buynow">⚡ Mua ngay</span>
+              <span class="meta-tag">Size: ${buyNowItem.size || 'L'}</span>
+              <span class="meta-tag">Màu: ${buyNowItem.color || 'Tiêu chuẩn'}</span>
+            </div>
+            <div class="checkout-item-controls">
+              <div class="checkout-stepper">
+                <button type="button" class="btn-step" onclick="updateBuyNowStep(-1)" aria-label="Giảm">−</button>
+                <span class="step-num">${qty}</span>
+                <button type="button" class="btn-step" onclick="updateBuyNowStep(1)" aria-label="Tăng">+</button>
+              </div>
+              <button type="button" class="btn-remove-item" onclick="removeBuyNowItem()" title="Hủy món mua ngay">
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+          <div class="checkout-item-price">
+            ${formatVND(totalAmount)}
+          </div>
+        </div>
+      `;
+
+        subtotalEl.textContent = formatVND(totalAmount);
+        grandTotalEl.textContent = formatVND(totalAmount);
+        btnSubmitText.textContent = `Xác nhận Mua ngay (${formatVND(totalAmount)})`;
+        btnSubmit.disabled = false;
+        btnSubmit.style.opacity = '1';
+        btnSubmit.style.cursor = 'pointer';
+
+      } else {
+        // CART MODE
+        if (bcTitle) bcTitle.textContent = 'Thanh toán Giỏ hàng';
+        if (btnBackText) btnBackText.textContent = 'Mở giỏ hàng';
+        if (btnBack) {
+          btnBack.onclick = () => Cart.open();
+        }
+
+        bannerEl.className = 'checkout-mode-banner cart-mode';
+        bannerEl.innerHTML = `
+        <i class="fa-solid fa-cart-shopping"></i>
+        <div>
+          <strong>Thanh toán Giỏ hàng:</strong> Bạn có thể mua tất cả hoặc chọn lọc các món bằng checkbox bên dưới.
+        </div>
+      `;
+
+        if (cartItems.length === 0) {
+          selectBarEl.style.display = 'none';
+          summaryTitleText.innerHTML = `Giỏ hàng của bạn (0 món)`;
+          itemsListEl.innerHTML = `
+          <div class="checkout-empty-box">
+            <div class="checkout-empty-icon">🛍️</div>
+            <h4 class="checkout-empty-title">Giỏ hàng của bạn đang trống</h4>
+            <p class="checkout-empty-desc">Hãy chọn thêm sản phẩm yêu thích trước khi thanh toán.</p>
+            <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+              <a href="/products" class="btn-primary" style="font-size: 12.5px; padding: 8px 16px;">
+                Khám phá sản phẩm
+              </a>
+              ${buyNowItem ? `
+                <button type="button" class="btn-secondary" onclick="switchCheckoutMode('buy_now')" style="font-size: 12.5px; padding: 8px 16px;">
+                  Xem món Mua ngay ⚡
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+          subtotalEl.textContent = '0đ';
+          grandTotalEl.textContent = '0đ';
+          btnSubmit.disabled = true;
+          btnSubmit.style.opacity = '0.5';
+          btnSubmit.style.cursor = 'not-allowed';
+          return;
+        }
+
+        selectBarEl.style.display = 'flex';
+        const selectedCount = selectedCartIndices.size;
+        const totalCount = cartItems.length;
+
+        document.getElementById('selectedCountDisplay').textContent = selectedCount;
+        document.getElementById('totalCartCountDisplay').textContent = totalCount;
+        document.getElementById('chkSelectAllCart').checked = (selectedCount === totalCount && totalCount > 0);
+
+        let cartSubtotal = 0;
+        let totalQtySelected = 0;
+
+        itemsListEl.innerHTML = cartItems.map((it, idx) => {
+          const isSelected = selectedCartIndices.has(idx);
+          const itemQty = it.quantity || 1;
+          const itemTotal = it.price * itemQty;
+          if (isSelected) {
+            cartSubtotal += itemTotal;
+            totalQtySelected += itemQty;
+          }
+
+          return `
+          <div class="checkout-item-row ${isSelected ? '' : 'unselected'}">
+            <label class="custom-chk-label" style="margin-right: 2px;">
+              <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleCartItemSelect(${idx}, this.checked)">
+              <span class="chk-custom-box"></span>
+            </label>
+            <div class="checkout-item-thumb">
+              <img src="${it.image_url || '/static/images/placeholder.jpg'}" alt="${it.name}" onerror="this.onerror=null; this.src='/static/images/placeholder.jpg';">
+            </div>
+            <div class="checkout-item-info">
+              <div class="checkout-item-title" title="${it.name}">${it.name}</div>
+              <div class="checkout-item-meta">
+                <span class="meta-tag">Size: ${it.size || 'L'}</span>
+                <span class="meta-tag">Màu: ${it.color || 'Tiêu chuẩn'}</span>
+              </div>
+              <div class="checkout-item-controls">
+                <div class="checkout-stepper">
+                  <button type="button" class="btn-step" onclick="updateCartStep(${idx}, -1)" aria-label="Giảm">−</button>
+                  <span class="step-num">${itemQty}</span>
+                  <button type="button" class="btn-step" onclick="updateCartStep(${idx}, 1)" aria-label="Tăng">+</button>
+                </div>
+                <button type="button" class="btn-remove-item" onclick="removeCartItem(${idx})" title="Xóa món">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </div>
+            </div>
+            <div class="checkout-item-price">
+              ${formatVND(itemTotal)}
+            </div>
+          </div>
+        `;
+        }).join('');
+
+        summaryTitleText.innerHTML = `Giỏ hàng của bạn (${selectedCount}/${totalCount} món được chọn)`;
+        subtotalEl.textContent = formatVND(cartSubtotal);
+        grandTotalEl.textContent = formatVND(cartSubtotal);
+
+        if (selectedCount === 0) {
+          btnSubmit.disabled = true;
+          btnSubmit.style.opacity = '0.5';
+          btnSubmit.style.cursor = 'not-allowed';
+          btnSubmitText.textContent = 'Vui lòng chọn ít nhất 1 sản phẩm';
+        } else {
+          btnSubmit.disabled = false;
+          btnSubmit.style.opacity = '1';
+          btnSubmit.style.cursor = 'pointer';
+          btnSubmitText.textContent = `Thanh toán ${selectedCount} món (${formatVND(cartSubtotal)})`;
+        }
+      }
+    };
+
+    // Run initialization
+    initMode();
+    renderCheckout();
+
+    // Complete Order Submission
+    if (btnSubmit) {
+      btnSubmit.addEventListener('click', async () => {
+        let itemsToOrder = [];
+        let totalAmountToOrder = 0;
+
+        if (currentMode === 'buy_now') {
+          const bItem = Cart.getBuyNowItem();
+          if (!bItem) {
+            UI.showToast('Không tìm thấy sản phẩm mua ngay! Vui lòng chọn sản phẩm.', '⚠️');
+            return;
+          }
+          itemsToOrder = [bItem];
+          totalAmountToOrder = bItem.price * (bItem.quantity || 1);
+        } else {
+          const allCartItems = Cart.getItems();
+          itemsToOrder = allCartItems.filter((_, idx) => selectedCartIndices.has(idx));
+          if (itemsToOrder.length === 0) {
+            UI.showToast('Vui lòng chọn ít nhất 1 sản phẩm trong giỏ hàng để thanh toán!', '⚠️');
+            return;
+          }
+          totalAmountToOrder = itemsToOrder.reduce((sum, it) => sum + (it.price * (it.quantity || 1)), 0);
+        }
+
+        const name = document.getElementById('customerName')?.value.trim();
+        const phone = document.getElementById('customerPhone')?.value.trim();
+        const email = document.getElementById('customerEmail')?.value.trim();
+        const address = document.getElementById('shippingAddress')?.value.trim();
+        const city = document.getElementById('shippingCity')?.value.trim();
+        const notes = document.getElementById('orderNotes')?.value.trim();
+        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'COD';
+
+        // Validation
+        if (!name) {
+          UI.showToast('Vui lòng nhập Họ và tên người nhận!', '⚠️');
+          document.getElementById('customerName')?.focus();
+          return;
+        }
+        if (!phone || phone.length < 8) {
+          UI.showToast('Vui lòng nhập Số điện thoại hợp lệ!', '⚠️');
+          document.getElementById('customerPhone')?.focus();
+          return;
+        }
+        if (!address) {
+          UI.showToast('Vui lòng nhập Địa chỉ nhận hàng!', '⚠️');
+          document.getElementById('shippingAddress')?.focus();
+          return;
+        }
+        if (!city) {
+          UI.showToast('Vui lòng nhập Phường/Xã, Quận/Huyện, Tỉnh/Thành phố!', '⚠️');
+          document.getElementById('shippingCity')?.focus();
+          return;
+        }
+
+        // Show loading state
+        const originalText = btnSubmit.innerHTML;
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý đơn hàng...`;
+
+        try {
+          const payload = {
+            customer_name: name,
+            customer_phone: phone,
+            customer_email: email,
+            shipping_address: address,
+            shipping_city: city,
+            order_notes: notes,
+            payment_method: paymentMethod,
+            items: itemsToOrder,
+            total_amount: totalAmountToOrder
+          };
+
+          const res = await fetch('/api/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await res.json();
+
+          if (res.ok && data.success) {
+            if (currentMode === 'buy_now') {
+              // Clear only buy now item, keep shopping cart completely intact!
+              Cart.clearBuyNowItem();
+            } else {
+              // Remove only purchased items from the shopping cart
+              Cart.removePurchasedItems(itemsToOrder);
+            }
+
+            UI.showToast('Đặt hàng thành công! Đang chuyển đến xác nhận...', '🎉');
+            setTimeout(() => {
+              window.location.href = data.redirect_url;
+            }, 400);
+          } else {
+            UI.showToast(data.error || 'Có lỗi xảy ra, vui lòng thử lại!', '❌');
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = originalText;
+          }
+        } catch (err) {
+          console.error('Checkout error:', err);
+          UI.showToast('Lỗi mạng khi đặt hàng, vui lòng thử lại!', '❌');
+          btnSubmit.disabled = false;
+          btnSubmit.innerHTML = originalText;
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

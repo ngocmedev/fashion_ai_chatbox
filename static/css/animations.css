@@ -1,0 +1,263 @@
+/* ==========================================================================
+   FASHION. — Micro-interactions & Animations
+   Subtle, Fast (150ms-350ms), Cubic-bezier, Premium feel
+   ========================================================================== */
+
+/* Page Load In */
+@keyframes fadeInSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-editorial,
+.stylist-session-card,
+.feed-column {
+  animation: fadeInSlideUp 350ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.stylist-session-card {
+  animation-delay: 80ms;
+}
+
+.feed-column {
+  animation-delay: 140ms;
+}
+
+/* Chat Entry In */
+@keyframes messageIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-entry {
+  animation: messageIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Wishlist Heart Micro-Bounce */
+@keyframes heartBounce {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.25);
+  }
+  65% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.btn-wishlist.animate-bounce {
+  animation: heartBounce 300ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Typing Indicator (3 Dots) */
+.typing-box-social {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 16px;
+  background-color: var(--bg-subtle);
+  border-radius: var(--radius-lg);
+  border-bottom-left-radius: 4px;
+  width: fit-content;
+}
+
+.typing-dot-subtle {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--text-secondary);
+  animation: typingGently 1.2s infinite ease-in-out;
+}
+
+.typing-dot-subtle:nth-child(1) { animation-delay: 0s; }
+.typing-dot-subtle:nth-child(2) { animation-delay: 0.18s; }
+.typing-dot-subtle:nth-child(3) { animation-delay: 0.36s; }
+
+@keyframes typingGently {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1.1);
+    opacity: 1;
+    background-color: var(--text-primary);
+  }
+}
+
+/* Skeleton Loading Shimmer ("Styling your picks...") */
+@keyframes shimmerPulse {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-box {
+  background: linear-gradient(90deg, #F0F0EE 25%, #E5E5E2 37%, #F0F0EE 63%);
+  background-size: 400% 100%;
+  animation: shimmerPulse 1.4s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+.skeleton-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 380px;
+}
+
+.skeleton-media {
+  width: 100%;
+  aspect-ratio: 3/4;
+}
+
+.skeleton-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeleton-line {
+  height: 14px;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-line.short {
+  width: 45%;
+}
+
+.skeleton-line.price {
+  width: 30%;
+  height: 18px;
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast-item {
+  background-color: var(--text-primary);
+  color: #FFFFFF;
+  padding: 12px 20px;
+  border-radius: var(--radius-full);
+  font-size: 13.5px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow-float);
+  animation: toastSlideUp 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  pointer-events: auto;
+}
+
+@keyframes toastSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toast-item.exit {
+  animation: toastSlideDown 200ms ease-in forwards;
+}
+
+@keyframes toastSlideDown {
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* ==========================================================================
+   SMOOTH PAGE TRANSITIONS (Zero-Lag Navigation)
+   ========================================================================== */
+@keyframes pdpPageEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pdp-page-wrapper {
+  animation: pdpPageEntrance 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity, transform;
+}
+
+.pdp-gallery-wrap {
+  animation: pdpPageEntrance 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 30ms;
+}
+
+.pdp-info-col {
+  animation: pdpPageEntrance 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 60ms;
+}
+
+/* Page Exit Transition */
+body.page-transitioning {
+  opacity: 0.88;
+  transition: opacity 100ms ease;
+  pointer-events: none;
+}
+
+body.page-transitioning .cart-drawer-panel {
+  opacity: 0.6;
+  transform: scale(0.985);
+  transition: opacity 100ms ease, transform 100ms ease;
+}
+
+/* Native View Transition API Customization */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 160ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Accessibility: Prefers Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

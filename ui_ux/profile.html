@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Thông Tin Cá Nhân | Evern — Fashion AI Stylist{% endblock %}
+
+{% block content %}
+<div class="profile-page-wrapper">
+  <div class="profile-container">
+    
+    <!-- BREADCRUMBS -->
+    <nav class="profile-breadcrumbs" aria-label="Đường dẫn">
+      <a href="/" class="p-bc-link">TRANG CHỦ</a>
+      <span class="p-bc-sep">&gt;</span>
+      <span class="p-bc-link">TÀI KHOẢN</span>
+      <span class="p-bc-sep">&gt;</span>
+      <span class="p-bc-current">THÔNG TIN CÁ NHÂN</span>
+    </nav>
+
+    <!-- ALERTS -->
+    {% if success_msg %}
+    <div class="profile-alert success">
+      <i class="fa-solid fa-circle-check alert-icon"></i>
+      <div class="alert-content">
+        <strong>Thành công!</strong> {{ success_msg }}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if error_msg %}
+    <div class="profile-alert error">
+      <i class="fa-solid fa-triangle-exclamation alert-icon"></i>
+      <div class="alert-content">
+        <strong>Lỗi:</strong> {{ error_msg }}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="profile-layout-grid">
+      
+      <!-- LEFT SIDEBAR: PROFILE SUMMARY CARD -->
+      <aside class="profile-sidebar-card">
+        <div class="profile-avatar-large">
+          <span>{{ (user.full_name or user.username)[:1].upper() }}</span>
+        </div>
+        <h2 class="profile-user-name">{{ user.full_name or user.username }}</h2>
+        <div class="profile-user-handle">@{{ user.username }}</div>
+        
+        <div class="profile-status-tag">
+          <i class="fa-solid fa-shield-halved"></i> Khách hàng thành viên
+        </div>
+
+        <div class="profile-quick-meta">
+          <div class="meta-item">
+            <span class="meta-label">Email:</span>
+            <span class="meta-val" title="{{ user.email }}">{{ user.email }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Số điện thoại:</span>
+            <span class="meta-val">{{ user.phone or 'Chưa cập nhật' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Ngày tham gia:</span>
+            <span class="meta-val">{{ user.created_at[:10] if user.created_at else 'Mới đây' }}</span>
+          </div>
+        </div>
+
+        <div class="profile-sidebar-nav">
+          <a href="/profile" class="side-nav-item active">
+            <i class="fa-regular fa-address-card"></i> Thông tin cá nhân
+          </a>
+          <a href="javascript:void(0)" onclick="Wishlist.open()" class="side-nav-item">
+            <i class="fa-regular fa-heart"></i> Món đồ đã lưu
+          </a>
+          <a href="/checkout?mode=cart" class="side-nav-item">
+            <i class="fa-solid fa-credit-card"></i> Đi tới thanh toán
+          </a>
+          <a href="/logout" class="side-nav-item logout">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng xuất tài khoản
+          </a>
+        </div>
+      </aside>
+
+      <!-- RIGHT MAIN: EDIT PROFILE FORM -->
+      <main class="profile-main-card">
+        <form method="POST" action="/profile" class="profile-edit-form" id="profileForm">
+          
+          <!-- SECTION 1: THÔNG TIN CÁ NHÂN CƠ BẢN -->
+          <div class="form-section">
+            <div class="form-section-header">
+              <div class="section-icon"><i class="fa-regular fa-user"></i></div>
+              <div>
+                <h3 class="section-title">1. Thông tin cá nhân</h3>
+                <p class="section-desc">Cập nhật họ tên, số điện thoại và thông tin cá nhân của bạn</p>
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="fullName" class="input-label">Họ và tên <span class="req">*</span></label>
+                <input 
+                  type="text" 
+                  id="fullName" 
+                  name="full_name" 
+                  class="p-input" 
+                  value="{{ user.full_name or '' }}" 
+                  placeholder="Ví dụ: Hoàng Nam" 
+                  required
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="username" class="input-label">Tên tài khoản (Không thể thay đổi)</label>
+                <input 
+                  type="text" 
+                  id="username" 
+                  class="p-input readonly" 
+                  value="@{{ user.username }}" 
+                  readonly
+                >
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="email" class="input-label">Địa chỉ Email</label>
+                <div class="input-with-badge">
+                  <input 
+                    type="email" 
+                    id="email" 
+                    class="p-input readonly" 
+                    value="{{ user.email }}" 
+                    readonly
+                  >
+                  <span class="verified-pill"><i class="fa-solid fa-check"></i> Đã xác thực</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="phone" class="input-label">Số điện thoại <span class="req">*</span></label>
+                <input 
+                  type="tel" 
+                  id="phone" 
+                  name="phone" 
+                  class="p-input" 
+                  value="{{ user.phone or '' }}" 
+                  placeholder="Ví dụ: 0912 345 678" 
+                  required
+                >
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="input-label">Giới tính</label>
+                <div class="gender-radio-group">
+                  <label class="gender-radio-item">
+                    <input type="radio" name="gender" value="Nam" {% if user.gender == 'Nam' or not user.gender %}checked{% endif %}>
+                    <span class="custom-radio"></span>
+                    <span>Nam</span>
+                  </label>
+                  <label class="gender-radio-item">
+                    <input type="radio" name="gender" value="Nữ" {% if user.gender == 'Nữ' %}checked{% endif %}>
+                    <span class="custom-radio"></span>
+                    <span>Nữ</span>
+                  </label>
+                  <label class="gender-radio-item">
+                    <input type="radio" name="gender" value="Khác" {% if user.gender == 'Khác' %}checked{% endif %}>
+                    <span class="custom-radio"></span>
+                    <span>Khác</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="birthday" class="input-label">Ngày sinh</label>
+                <input 
+                  type="date" 
+                  id="birthday" 
+                  name="birthday" 
+                  class="p-input" 
+                  value="{{ user.birthday or '' }}"
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 2: THÔNG TIN GIAO HÀNG (ĐỒNG BỘ VỚI CHECKOUT) -->
+          <div class="form-section">
+            <div class="form-section-header">
+              <div class="section-icon"><i class="fa-solid fa-truck-fast"></i></div>
+              <div>
+                <h3 class="section-title">2. Địa chỉ nhận hàng mặc định</h3>
+                <p class="section-desc">Thông tin này sẽ tự động điền sẵn khi bạn mua sắm tại trang Thanh toán</p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="address" class="input-label">Địa chỉ nhận hàng (Số nhà, tên ngõ, tên đường) <span class="req">*</span></label>
+              <input 
+                type="text" 
+                id="address" 
+                name="address" 
+                class="p-input" 
+                value="{{ user.address or '' }}" 
+                placeholder="Ví dụ: Số 18 Phố Duy Tân"
+              >
+            </div>
+
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label for="ward" class="input-label">Phường / Xã</label>
+                <input 
+                  type="text" 
+                  id="ward" 
+                  name="ward" 
+                  class="p-input" 
+                  value="{{ user.ward or '' }}" 
+                  placeholder="Ví dụ: Phường Dịch Vọng Hậu"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="district" class="input-label">Quận / Huyện</label>
+                <input 
+                  type="text" 
+                  id="district" 
+                  name="district" 
+                  class="p-input" 
+                  value="{{ user.district or '' }}" 
+                  placeholder="Ví dụ: Quận Cầu Giấy"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="city" class="input-label">Tỉnh / Thành phố <span class="req">*</span></label>
+                <input 
+                  type="text" 
+                  id="city" 
+                  name="city" 
+                  class="p-input" 
+                  value="{{ user.city or '' }}" 
+                  placeholder="Ví dụ: Hà Nội"
+                >
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="notes" class="input-label">Ghi chú giao hàng mặc định (không bắt buộc)</label>
+              <textarea 
+                id="notes" 
+                name="notes" 
+                class="p-textarea" 
+                rows="2" 
+                placeholder="Ví dụ: Giao hàng trong giờ hành chính, gọi điện trước khi giao..."
+              >{{ user.notes or '' }}</textarea>
+            </div>
+          </div>
+
+          <!-- SECTION 3: ĐỔI MẬT KHẨU (BẢO MẬT) -->
+          <div class="form-section">
+            <div class="form-section-header">
+              <div class="section-icon"><i class="fa-solid fa-lock"></i></div>
+              <div>
+                <h3 class="section-title">3. Đổi mật khẩu tài khoản</h3>
+                <p class="section-desc">Để trống các ô dưới đây nếu bạn không có nhu cầu đổi mật khẩu</p>
+              </div>
+            </div>
+
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label for="currentPassword" class="input-label">Mật khẩu hiện tại</label>
+                <input 
+                  type="password" 
+                  id="currentPassword" 
+                  name="current_password" 
+                  class="p-input" 
+                  placeholder="••••••••" 
+                  autocomplete="current-password"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="newPassword" class="input-label">Mật khẩu mới</label>
+                <input 
+                  type="password" 
+                  id="newPassword" 
+                  name="new_password" 
+                  class="p-input" 
+                  placeholder="Ít nhất 6 ký tự" 
+                  autocomplete="new-password"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="confirmPassword" class="input-label">Xác nhận mật khẩu mới</label>
+                <input 
+                  type="password" 
+                  id="confirmPassword" 
+                  name="confirm_password" 
+                  class="p-input" 
+                  placeholder="Nhập lại mật khẩu mới" 
+                  autocomplete="new-password"
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- FORM ACTIONS -->
+          <div class="form-actions-bar">
+            <button type="submit" class="btn-save-profile">
+              <i class="fa-solid fa-floppy-disk"></i> Lưu thông tin thay đổi
+            </button>
+            <a href="/checkout?mode=cart" class="btn-goto-checkout">
+              <i class="fa-solid fa-bag-shopping"></i> Đi tới thanh toán giỏ hàng
+            </a>
+          </div>
+
+        </form>
+      </main>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

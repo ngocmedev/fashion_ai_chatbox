@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Sản Phẩm Thời Trang Nam & Nữ | Evern — Gen Z & Công Sở Cao Cấp{% endblock %}
+
+{% block content %}
+<div class="products-catalog-page">
+  <div class="catalog-page-container">
+    
+    <!-- 1. BREADCRUMB NAVIGATION (Matching Screenshot) -->
+    <nav class="catalog-breadcrumbs-bar" aria-label="Đường dẫn trang">
+      <div class="breadcrumb-inner">
+        <a href="/" class="bc-link">TRANG CHỦ</a>
+        <span class="bc-arrow">&gt;</span>
+        <a href="javascript:void(0)" class="bc-link" id="bcCategoryLink" onclick="CatalogPage.filterByCategory('áo')">ÁO</a>
+        <span class="bc-arrow">&gt;</span>
+        <span class="bc-current" id="bcCurrentLabel">ÁO SƠ MI</span>
+      </div>
+    </nav>
+
+    <!-- 2. CATEGORY QUICK-FILTER PILL TABS (Matching Screenshot) -->
+    <div class="category-pills-scroll-wrap">
+      <div class="category-pills-bar" id="categoryPillsBar">
+        <button type="button" class="category-pill-btn active" data-category="all">TẤT CẢ</button>
+        <button type="button" class="category-pill-btn" data-category="new">HÀNG MỚI VỀ</button>
+        <button type="button" class="category-pill-btn" data-category="collection">BỘ SƯU TẬP</button>
+        <button type="button" class="category-pill-btn" data-category="sale">GIÁ TỐT</button>
+        <button type="button" class="category-pill-btn" data-category="áo">ÁO</button>
+        <button type="button" class="category-pill-btn" data-category="quần">QUẦN</button>
+        <button type="button" class="category-pill-btn" data-category="phụ kiện">PHỤ KIỆN</button>
+        <button type="button" class="category-pill-btn" data-category="bestseller">SẢN PHẨM BÁN CHẠY</button>
+      </div>
+    </div>
+
+    <!-- 3. MAIN CATALOG 2-COLUMN LAYOUT -->
+    <div class="catalog-layout-grid" id="catalogLayoutGrid">
+      
+      <!-- LEFT COLUMN: FILTER SIDEBAR (BỘ LỌC) -->
+      <aside class="catalog-filter-sidebar" id="catalogFilterSidebar">
+        <div class="filter-sidebar-header">
+          <div class="filter-sidebar-title">
+            <span>BỘ LỌC</span>
+          </div>
+          <button type="button" class="btn-reset-filters" id="btnResetFilters" title="Đặt lại bộ lọc" onclick="CatalogPage.resetFilters()">
+            Xóa bộ lọc
+          </button>
+        </div>
+
+        <!-- Filter Accordion Groups -->
+        <div class="filter-accordions-wrap">
+          
+          <!-- Accordion 1: Kiểu cổ áo -->
+          <div class="filter-accordion-group">
+            <button type="button" class="accordion-head" onclick="CatalogPage.toggleAccordion(this)">
+              <span>Kiểu cổ áo</span>
+              <i class="fa-solid fa-angle-down accordion-icon"></i>
+            </button>
+            <div class="accordion-content">
+              <label class="filter-check-item">
+                <input type="checkbox" name="collar" value="Cổ đức" onchange="CatalogPage.onFilterChange()">
+                <span class="custom-box"></span>
+                <span class="check-label">Cổ đức</span>
+              </label>
+              <label class="filter-check-item">
+                <input type="checkbox" name="collar" value="Cổ bẻ" onchange="CatalogPage.onFilterChange()">
+                <span class="custom-box"></span>
+                <span class="check-label">Cổ bẻ / Cổ polo</span>
+              </label>
+              <label class="filter-check-item">
+                <input type="checkbox" name="collar" value="Cổ tàu" onchange="CatalogPage.onFilterChange()">
+                <span class="custom-box"></span>
+                <span class="check-label">Cổ tàu / Cổ trụ</span>
+              </label>
+              <label class="filter-check-item">
+                <input type="checkbox" name="collar" value="Cổ Cuba" onchange="CatalogPage.onFilterChange()">
+                <span class="custom-box"></span>
+                <span class="check-label">Cổ Cuba</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Accordion 2: Màu sắc -->
+          <div class="filter-accordion-group">
+            <button type="button" class="accordion-head" onclick="CatalogPage.toggleAccordion(this)">
+              <span>Màu sắc</span>
+              <i class="fa-solid fa-angle-down accordion-icon"></i>
+            </button>
+            <div class="accordion-content">
+              <div class="color-swatches-matrix" id="filterColorMatrix">
+                <button type="button" class="filter-color-chip" data-color="trắng" title="Trắng" onclick="CatalogPage.toggleColorFilter('trắng', this)">
+                  <span class="color-dot" style="background:#FFFFFF; border:1px solid #D1D5DB;"></span>
+                  <span class="color-text">Trắng</span>
+                </button>
+                <button type="button" class="filter-color-chip" data-color="xanh nhạt" title="Xanh nhạt" onclick="CatalogPage.toggleColorFilter('xanh nhạt', this)">
+                  <span class="color-dot" style="background:#8DA4B4;"></span>
+                  <span class="color-text">Xanh nhạt</span>
+                </button>
+                <button type="button" class="filter-color-chip" data-color="xanh navy" title="Xanh navy" onclick="CatalogPage.toggleColorFilter('xanh navy', this)">
+                  <span class="color-dot" style="background:#2B4A6F;"></span>
+                  <span class="color-text">Xanh navy</span>
+                </button>
+                <button type="button" class="filter-color-chip" data-color="đen" title="Đen" onclick="CatalogPage.toggleColorFilter('đen', this)">
+                  <span class="color-dot" style="background:#1C1C1C;"></span>
+                  <span class="color-text">Đen</span>
+                </button>
+                <button type="button" class="filter-color-chip" data-color="xám" title="Xám / Ghi" onclick="CatalogPage.toggleColorFilter('xám', this)">
+                  <span class="color-dot" style="background:#8A939C;"></span>
+                  <span class="color-text">Xám / Ghi</span>
+                </button>
+                <button type="button" class="filter-color-chip" data-color="kem" title="Kem / Be" onclick="CatalogPage.toggleColorFilter('kem', this)">
+                  <span class="color-dot" style="background:#E8DFD3;"></span>
+                  <span class="color-text">Kem / Be</span>
+                </button>
+                <button type="button" class="filter-color-chip" data-color="xanh mint" title="Xanh mint" onclick="CatalogPage.toggleColorFilter('xanh mint', this)">
+                  <span class="color-dot" style="background:#9BB7A5;"></span>
+                  <span class="color-text">Xanh mint</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Accordion 3: Chất liệu -->
+          <div class="filter-accordion-group">
+            <button type="button" class="accordion-head" onclick="CatalogPage.toggleAccordion(this)">
+              <span>Chất liệu</span>
+              <i class="fa-solid fa-angle-down accordion-icon"></i>
+            </button>
+            <div class="accordion-content">
+              <label class="filter-check-item">
+                <input type="checkbox" name="material" value="Bamboo" onchange="CatalogPage.onFilterChange()">
+                <span class="custom-box"></span>
+                <span class="check-label">Sợi tre Bamboo</span>
+              </label>
+              <label class="filter-check-item">
+                <input type="checkbox" name="material" value="Cotton" onchange="CatalogPage.onFilterChange()">
+                <span class="custom-box"></span>
+                <span class="check-label">Cotton cao cấp</span>
+              </label>
+              <label class="filter-check-item">
+                <input type="checkbox" name="material" value="Nano" onchange="CatalogPage.onFilterChange()">
+                <span class="custom-box"></span>
+                <span class="check-label">Công nghệ Nano</span>
+              </label>
+              <label class="filter-check-item">
+                <input type="checkbox" name="material" value="Linen" onchange="CatalogPage.onFilterChange()">
+                <span class="custom-box"></span>
+                <span class="check-label">Linen tự nhiên</span>
+              </label>
+              <label class="filter-check-item">
+                <input type="checkbox" name="material" value="Lụa" onchange="CatalogPage.onFilterChange()">
+                <span class="custom-box"></span>
+                <span class="check-label">Lụa Satin</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Accordion 4: Form dáng -->
+          <div class="filter-accordion-group">
+            <button type="button" class="accordion-head" onclick="CatalogPage.toggleAccordion(this)">
+              <span>Form dáng</span>
+              <i class="fa-solid fa-angle-down accordion-icon"></i>
+            </button>
+            <div class="accordion-content">
+              <label class="filter-check-item">
+                <input type="checkbox" name="fit" value="Slim fit" onchange="CatalogPage.onFilterChange()">
+                <span class="custom-box"></span>
+                <span class="check-label">Slim Fit (Ôm vừa)</span>
+              </label>
+              <label class="filter-check-item">
+                <input type="checkbox" name="fit" value="Regular fit" onchange="CatalogPage.onFilterChange()">
+                <span class="custom-box"></span>
+                <span class="check-label">Regular Fit (Suông nhẹ)</span>
+              </label>
+              <label class="filter-check-item">
+                <input type="checkbox" name="fit" value="Oversize" onchange="CatalogPage.onFilterChange()">
+                <span class="custom-box"></span>
+                <span class="check-label">Oversize (Rộng trẻ trung)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Accordion 5: Kích cỡ (Expanded by default as in Owen screenshot) -->
+          <div class="filter-accordion-group open">
+            <button type="button" class="accordion-head" onclick="CatalogPage.toggleAccordion(this)">
+              <span>Kích cỡ</span>
+              <i class="fa-solid fa-angle-up accordion-icon"></i>
+            </button>
+            <div class="accordion-content" style="display: block;">
+              <div class="size-matrix-grid" id="sizeMatrixGrid">
+                <button type="button" class="size-matrix-btn" data-size="XS" onclick="CatalogPage.toggleSizeFilter('XS', this)">XS</button>
+                <button type="button" class="size-matrix-btn" data-size="S" onclick="CatalogPage.toggleSizeFilter('S', this)">S</button>
+                <button type="button" class="size-matrix-btn" data-size="M" onclick="CatalogPage.toggleSizeFilter('M', this)">M</button>
+                <button type="button" class="size-matrix-btn" data-size="L" onclick="CatalogPage.toggleSizeFilter('L', this)">L</button>
+                <button type="button" class="size-matrix-btn" data-size="XL" onclick="CatalogPage.toggleSizeFilter('XL', this)">XL</button>
+                <button type="button" class="size-matrix-btn" data-size="XXL" onclick="CatalogPage.toggleSizeFilter('XXL', this)">XXL</button>
+                <button type="button" class="size-matrix-btn" data-size="38" onclick="CatalogPage.toggleSizeFilter('38', this)">38</button>
+                <button type="button" class="size-matrix-btn" data-size="39" onclick="CatalogPage.toggleSizeFilter('39', this)">39</button>
+                <button type="button" class="size-matrix-btn" data-size="40" onclick="CatalogPage.toggleSizeFilter('40', this)">40</button>
+                <button type="button" class="size-matrix-btn" data-size="41" onclick="CatalogPage.toggleSizeFilter('41', this)">41</button>
+                <button type="button" class="size-matrix-btn" data-size="42" onclick="CatalogPage.toggleSizeFilter('42', this)">42</button>
+                <button type="button" class="size-matrix-btn" data-size="43" onclick="CatalogPage.toggleSizeFilter('43', this)">43</button>
+                <button type="button" class="size-matrix-btn" data-size="44" onclick="CatalogPage.toggleSizeFilter('44', this)">44</button>
+                <button type="button" class="size-matrix-btn" data-size="2XL" onclick="CatalogPage.toggleSizeFilter('2XL', this)">2XL</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Accordion 6: Kiểu tay áo (Expanded by default as in Owen screenshot) -->
+          <div class="filter-accordion-group open">
+            <button type="button" class="accordion-head" onclick="CatalogPage.toggleAccordion(this)">
+              <span>Kiểu tay áo</span>
+              <i class="fa-solid fa-angle-up accordion-icon"></i>
+            </button>
+            <div class="accordion-content" style="display: block;">
+              <label class="filter-check-item">
+                <input type="checkbox" name="sleeve" value="Dài tay" onchange="CatalogPage.onFilterChange()">
+                <span class="custom-box"></span>
+                <span class="check-label">Dài tay</span>
+              </label>
+              <label class="filter-check-item">
+                <input type="checkbox" name="sleeve" value="Ngắn tay" onchange="CatalogPage.onFilterChange()">
+                <span class="custom-box"></span>
+                <span class="check-label">Ngắn tay</span>
+              </label>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+
+      <!-- RIGHT COLUMN: MAIN PRODUCT CATALOG & PAGINATION -->
+      <main class="catalog-main-content">
+        
+        <!-- Top Toolbar (Matching Owen Screenshot) -->
+        <div class="catalog-grid-toolbar">
+          <div class="toolbar-left">
+            <button type="button" class="btn-sidebar-toggle" id="btnToggleSidebar" title="Ẩn/Hiện bộ lọc" onclick="CatalogPage.toggleSidebar()">
+              <i class="fa-solid fa-angle-left" id="sidebarToggleIcon"></i>
+            </button>
+            <span class="catalog-counter-text">
+              <strong id="catalogCountVal">0</strong> sản phẩm
+            </span>
+          </div>
+
+          <div class="toolbar-right">
+            <!-- Sort dropdown -->
+            <div class="sort-select-wrapper">
+              <label for="catalogSortSelect" class="sort-label">Sắp xếp:</label>
+              <select id="catalogSortSelect" class="catalog-sort-select" onchange="CatalogPage.onSortChange(this.value)">
+                <option value="default">Mặc định</option>
+                <option value="newest">Mới nhất</option>
+                <option value="price-asc">Giá: Thấp đến Cao</option>
+                <option value="price-desc">Giá: Cao đến Thấp</option>
+                <option value="discount">Khuyến mãi tốt nhất</option>
+              </select>
+            </div>
+
+            <!-- Column view switcher -->
+            <div class="view-switcher-bar">
+              <span class="view-label">Hiển thị</span>
+              <button type="button" class="btn-view-mode active" id="btnView3Col" title="Lưới 3 cột" onclick="CatalogPage.setGridColumns(3)">
+                <i class="fa-solid fa-table-cells"></i>
+              </button>
+              <button type="button" class="btn-view-mode" id="btnView4Col" title="Lưới 4 cột" onclick="CatalogPage.setGridColumns(4)">
+                <i class="fa-solid fa-table-cells-large"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Product Cards Grid (3 Columns or 4 Columns) -->
+        <div class="owen-products-grid cols-3" id="owenProductsGrid">
+          <!-- Populated dynamically via CatalogPage.render() -->
+        </div>
+
+        <!-- Dynamic Pagination Bar (10 products / page) -->
+        <div class="catalog-pagination-bar" id="catalogPagination">
+          <!-- Populated dynamically via CatalogPage.renderPagination() -->
+        </div>
+
+      </main>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof CatalogPage !== 'undefined') {
+    CatalogPage.init();
+  }
+});
+</script>
+{% endblock %}

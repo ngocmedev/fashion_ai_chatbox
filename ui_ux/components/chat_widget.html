@@ -1,0 +1,86 @@
+<!-- ========================================================================
+     FLOATING CHAT BUBBLE WIDGET (Bottom-Right)
+     ======================================================================== -->
+<div class="floating-chat-widget" id="floatingChatWidget">
+  <!-- Subtle Tooltip Hint -->
+  <div class="bubble-hint-tooltip" id="bubbleHintTooltip">
+    Hôm nay mặc gì?
+  </div>
+
+  <!-- Circular Launcher Button (Brand Logo Avatar with green dot) -->
+  <button class="chat-bubble-launcher" id="chatBubbleLauncher" aria-label="Mở cửa sổ tư vấn AI Stylist"
+    title="Tư vấn cùng Stylist AI">
+    <img src="/static/images/evern-logo.svg" alt="Evern Brand Logo" class="bubble-avatar-img">
+    <span class="bubble-online-badge"></span>
+  </button>
+
+  <!-- Floating Chat Popup Window (Collapsed by default) -->
+  <div class="chat-popup-card collapsed" id="chatPopupCard" role="dialog" aria-label="Khung chat tư vấn thời trang">
+    <!-- Popup Header -->
+    <div class="chat-popup-header">
+      <div class="stylist-info">
+        <img src="/static/images/evern-logo.svg" alt="Evern Logo" class="stylist-avatar-img"
+          style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div class="stylist-title-wrap">
+          <h2>EVERN STYLIST</h2>
+          <div class="stylist-status">
+            <span class="status-dot-pulse"></span>
+            <span>Online · Ready to style</span>
+          </div>
+        </div>
+      </div>
+      <div class="chat-popup-actions">
+        <button id="btnResetSession" class="btn-popup-action" title="Làm mới cuộc trò chuyện" aria-label="Làm mới">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+            <path d="M3 21v-5h5" />
+          </svg>
+        </button>
+        <button id="btnCloseChatPopup" class="btn-popup-action" title="Thu nhỏ chat" aria-label="Đóng chat">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Social Chat Stream -->
+    <div class="chat-conversation-stream" id="chatStream">
+      <div class="chat-entry stylist">
+        <div class="bubble-text">
+          <p>Chào bạn! Mình là Stylist riêng của bạn tại Evern. Bạn đang tìm outfit cho dịp gì hoặc muốn thử phong cách
+            nào hôm nay? 👀</p>
+        </div>
+        <span class="chat-time-meta">Vừa xong</span>
+      </div>
+    </div>
+
+    <!-- Quick Prompt Pills (Horizontal Scroll) -->
+    <div class="quick-prompts-scroller" aria-label="Gợi ý câu hỏi nhanh">
+      <button class="prompt-pill" onclick="Chat.sendPrompt('🔥 Outfit đi chơi cuối tuần')">🔥 Outfit đi chơi</button>
+      <button class="prompt-pill" onclick="Chat.sendPrompt('💸 Đồ đẹp dưới 500K')">💸 Dưới 500K</button>
+      <button class="prompt-pill" onclick="Chat.sendPrompt('🧥 Tìm áo blazer linen thanh lịch')">🧥 Áo blazer</button>
+      <button class="prompt-pill" onclick="Chat.sendPrompt('👗 Váy dạ hội đỏ đi tiệc')">👗 Váy đi tiệc</button>
+      <button class="prompt-pill" onclick="Chat.sendPrompt('👟 Giày sneaker trắng năng động')">👟 Sneaker</button>
+      <button class="prompt-pill" onclick="Chat.sendPrompt('✨ Gợi ý phối đồ hot trend')">✨ Xu hướng mới</button>
+    </div>
+
+    <!-- Chat Input Area -->
+    <div class="stylist-input-container">
+      <form class="chat-input-form" id="chatForm">
+        <input type="text" class="chat-text-input" id="chatInput"
+          placeholder="Nhập yêu cầu (VD: Áo blazer kem, Váy đỏ tiệc)..." autocomplete="off" required>
+        <button type="submit" class="btn-input-send" aria-label="Gửi tin nhắn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="19" x2="12" y2="5"></line>
+            <polyline points="5 12 12 5 19 12"></polyline>
+          </svg>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,270 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Quản lý Phiếu nhập kho | Evern. Admin{% endblock %}
+{% block breadcrumb %}Phiếu nhập kho{% endblock %}
+
+{% block content %}
+<!-- PAGE HEADER -->
+<div class="page-header-row">
+  <div>
+    <h1 class="page-title">Quản lý Phiếu Nhập Kho</h1>
+    <p class="page-subtitle">Ghi nhận thông tin nhập hàng từ xưởng may & nhà cung cấp, tự động cập nhật cộng dồn số lượng
+      tồn kho.</p>
+  </div>
+  <div class="page-actions-group">
+    <button type="button" class="btn-admin-accent" onclick="openAdminModal('modalCreateImport')">
+      <i class="fa-solid fa-plus"></i> Tạo phiếu nhập mới
+    </button>
+  </div>
+</div>
+
+<!-- DATA CARD -->
+<div class="admin-card">
+  <!-- TOOLBAR -->
+  <div class="table-toolbar">
+    <div class="search-input-wrap">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="importSearch" class="search-input"
+        placeholder="Tìm theo mã phiếu PN, nhà cung cấp hoặc người tạo..." onkeyup="filterImports()">
+    </div>
+
+    <div style="font-size: 13px; color: var(--admin-text-muted);">
+      Tổng số: <strong>{{ imports|length }}</strong> phiếu nhập
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-responsive">
+    <table class="admin-table" id="importsTable">
+      <thead>
+        <tr>
+          <th>Mã phiếu</th>
+          <th>Nhà cung cấp / Xưởng</th>
+          <th style="text-align: center;">Tổng số lượng</th>
+          <th>Tổng chi phí nhập</th>
+          <th>Người tạo phiếu</th>
+          <th>Thời gian nhập</th>
+          <th>Ghi chú</th>
+          <th style="text-align: right;">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if imports and imports|length > 0 %}
+        {% for imp in imports %}
+        <tr>
+          <td>
+            <strong style="color: #111111; font-size: 13.5px;">{{ imp.receipt_code }}</strong>
+          </td>
+          <td>
+            <strong style="color: #4B5563;">{{ imp.supplier_name }}</strong>
+          </td>
+          <td style="text-align: center;">
+            <span class="status-badge success">+{{ imp.total_quantity }} chiếc</span>
+          </td>
+          <td>
+            <strong style="color: var(--primary);">{{ "{:,.0f}".format(imp.total_amount) }}đ</strong>
+          </td>
+          <td>
+            <span class="status-badge neutral">{{ imp.created_by or 'Admin' }}</span>
+          </td>
+          <td style="color: var(--admin-text-muted); font-size: 12px;">
+            {{ imp.created_at[:16] if imp.created_at else '' }}
+          </td>
+          <td style="color: var(--admin-text-muted); font-size: 12px; max-width: 200px;">
+            {{ imp.notes or '—' }}
+          </td>
+          <td style="text-align: right;">
+            <button type="button" class="btn-admin-secondary" style="padding: 5px 10px; font-size: 12px;"
+              onclick="viewImportDetail({{ imp.id }})" title="Xem chi tiết hàng nhập">
+              <i class="fa-solid fa-eye"></i> Chi tiết
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+          <td colspan="8" style="text-align: center; padding: 40px; color: var(--admin-text-muted);">
+            Chưa có phiếu nhập kho nào. Bấm "Tạo phiếu nhập mới" để bổ sung hàng vào kho.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL: CREATE IMPORT RECEIPT -->
+<div class="admin-modal-backdrop" id="modalCreateImport">
+  <div class="admin-modal" style="max-width: 620px;">
+    <div class="admin-modal-header">
+      <h3 class="modal-title">Tạo Phiếu Nhập Hàng Vào Kho</h3>
+      <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalCreateImport')">&times;</button>
+    </div>
+    <form action="/admin/imports/create" method="POST">
+      <div class="admin-modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nhà cung cấp / Xưởng may <span style="color: #EF4444;">*</span></label>
+            <input type="text" name="supplier_name" class="form-input" placeholder="Ví dụ: Xưởng May Hà Nội" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Người lập phiếu</label>
+            <input type="text" name="created_by" class="form-input"
+              value="{{ current_user.full_name or current_user.username or 'Admin' }}" readonly
+              style="background: #F9FAFB;">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Chọn sản phẩm nhập kho <span style="color: #EF4444;">*</span></label>
+          <select name="product_id" id="impProductSelect" class="form-select" required onchange="updateProdPreview()">
+            <option value="">-- Chọn sản phẩm thời trang --</option>
+            {% for p in products %}
+            <option value="{{ p.id }}" data-price="{{ p.price }}" data-stock="{{ p.stock or 0 }}">{{ p.name }} (Kho
+              hiện tại: {{ p.stock or 0 }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Số lượng nhập (chiếc) <span style="color: #EF4444;">*</span></label>
+            <input type="number" name="quantity" id="impQty" class="form-input" placeholder="Ví dụ: 50" min="1" required
+              oninput="calcImportTotal()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Đơn giá nhập / chiếc (VND) <span style="color: #EF4444;">*</span></label>
+            <input type="number" name="import_price" id="impPrice" class="form-input" placeholder="Ví dụ: 180000" min="0"
+              required oninput="calcImportTotal()">
+          </div>
+        </div>
+
+        <!-- PREVIEW TOTAL -->
+        <div
+          style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 13px; font-weight: 600; color: #065F46;">Tổng tiền nhập kho dự kiến:</span>
+          <span style="font-size: 16px; font-weight: 800; color: #065F46;" id="impTotalDisplay">0đ</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Ghi chú phiếu nhập</label>
+          <textarea name="notes" class="form-textarea" rows="2"
+            placeholder="Lô hàng hè 2026, đợt nhập bổ sung..."></textarea>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin-secondary" onclick="closeAdminModal('modalCreateImport')">Hủy</button>
+        <button type="submit" class="btn-admin-accent">
+          <i class="fa-solid fa-check"></i> Xác nhận nhập kho
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: VIEW IMPORT DETAIL -->
+<div class="admin-modal-backdrop" id="modalImportDetail">
+  <div class="admin-modal">
+    <div class="admin-modal-header">
+      <h3 class="modal-title" id="impDetailCode">Chi tiết phiếu nhập kho</h3>
+      <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalImportDetail')">&times;</button>
+    </div>
+    <div class="admin-modal-body" id="modalImportDetailBody">
+      <div style="text-align: center; padding: 24px;">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; color: var(--primary);"></i>
+      </div>
+    </div>
+    <div class="admin-modal-footer">
+      <button type="button" class="btn-admin-secondary" onclick="closeAdminModal('modalImportDetail')">Đóng</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function calcImportTotal() {
+    const qty = parseInt(document.getElementById('impQty').value || '0', 10);
+    const price = parseInt(document.getElementById('impPrice').value || '0', 10);
+    const total = qty * price;
+    document.getElementById('impTotalDisplay').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total);
+  }
+
+  function updateProdPreview() {
+    const sel = document.getElementById('impProductSelect');
+    const opt = sel.options[sel.selectedIndex];
+    if (opt && opt.value) {
+      const retailPrice = parseInt(opt.getAttribute('data-price') || '0', 10);
+      // Estimate wholesale import price at ~50% retail
+      const estImport = Math.round(retailPrice * 0.55 / 1000) * 1000;
+      const priceInput = document.getElementById('impPrice');
+      if (!priceInput.value) {
+        priceInput.value = estImport;
+      }
+      calcImportTotal();
+    }
+  }
+
+  function filterImports() {
+    const q = document.getElementById('importSearch').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#importsTable tbody tr');
+    rows.forEach(r => {
+      const text = r.textContent.toLowerCase();
+      r.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
+  }
+
+  async function viewImportDetail(importId) {
+    const modalBody = document.getElementById('modalImportDetailBody');
+    modalBody.innerHTML = `
+      <div style="text-align: center; padding: 24px;">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; color: var(--primary);"></i>
+      </div>
+    `;
+    openAdminModal('modalImportDetail');
+
+    try {
+      const res = await fetch(`/api/admin/imports/${importId}`);
+      if (!res.ok) throw new Error('Lỗi khi tải thông tin phiếu');
+      const data = await res.json();
+      const r = data.receipt;
+      const items = data.items || [];
+      const formatVND = (num) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num || 0);
+
+      document.getElementById('impDetailCode').textContent = `Phiếu nhập #${r.receipt_code}`;
+
+      modalBody.innerHTML = `
+        <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 13px;">
+          <p><strong>Nhà cung cấp:</strong> ${r.supplier_name}</p>
+          <p><strong>Người lập:</strong> ${r.created_by || 'Admin'}</p>
+          <p><strong>Ngày nhập:</strong> ${r.created_at || '—'}</p>
+          ${r.notes ? `<p style="margin-top: 4px; color: #6B7280;"><strong>Ghi chú:</strong> "${r.notes}"</p>` : ''}
+        </div>
+
+        <h4 style="font-size: 13.5px; font-weight: 700; margin-bottom: 10px;">Chi tiết sản phẩm đã nhập</h4>
+        <div style="margin-bottom: 16px;">
+          ${items.map(it => `
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F3F4F6;">
+              <div>
+                <strong>${it.product_name}</strong>
+                <div style="font-size: 12px; color: #6B7280;">Số lượng: +${it.quantity} chiếc</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-weight: 700;">${formatVND(it.subtotal)}</div>
+                <div style="font-size: 11px; color: #6B7280;">${formatVND(it.import_price)} / chiếc</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #E5E7EB; padding-top: 10px;">
+          <strong>Tổng chi phí nhập:</strong>
+          <strong style="color: var(--primary); font-size: 16px;">${formatVND(r.total_amount)}</strong>
+        </div>
+      `;
+    } catch (err) {
+      modalBody.innerHTML = `<div style="color: #EF4444; padding: 16px;">Lỗi: ${err.message}</div>`;
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,303 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Quản lý Đơn hàng | Evern. Admin{% endblock %}
+{% block breadcrumb %}Đơn hàng{% endblock %}
+
+{% block head_extra %}
+<style>
+  /* Status Filter Tabs */
+  .order-status-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .status-tab-btn {
+    padding: 8px 16px;
+    background: #FFFFFF;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-full);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--admin-text-muted);
+    text-decoration: none;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status-tab-btn:hover {
+    color: var(--admin-text-main);
+    border-color: #B0B0B0;
+  }
+
+  .status-tab-btn.active {
+    background: #111111;
+    color: #FFFFFF;
+    border-color: #111111;
+  }
+
+  /* Order Detail Modal items list */
+  .order-detail-item-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--admin-border-subtle);
+  }
+
+  .order-detail-item-row:last-child {
+    border-bottom: none;
+  }
+
+  .order-detail-thumb {
+    width: 48px;
+    height: 60px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #F3F4F6;
+    flex-shrink: 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- PAGE HEADER -->
+<div class="page-header-row">
+  <div>
+    <h1 class="page-title">Quản lý Đơn hàng</h1>
+    <p class="page-subtitle">Theo dõi quy trình tiếp nhận, đóng gói chuẩn bị hàng và giao phát đơn hàng tới khách hàng.
+    </p>
+  </div>
+</div>
+
+<!-- STATUS FILTER TABS -->
+<div class="order-status-tabs">
+  <a href="/admin/orders" class="status-tab-btn {% if not current_status %}active{% endif %}">
+    Tất cả đơn ({{ status_counts.total }})
+  </a>
+  <a href="/admin/orders?status=pending_confirmation"
+    class="status-tab-btn {% if current_status == 'pending_confirmation' %}active{% endif %}">
+    <i class="fa-solid fa-clock text-amber-500"></i> Chờ xác nhận ({{ status_counts.pending }})
+  </a>
+  <a href="/admin/orders?status=preparing"
+    class="status-tab-btn {% if current_status == 'preparing' %}active{% endif %}">
+    <i class="fa-solid fa-box-open text-purple-500"></i> Chuẩn bị hàng ({{ status_counts.preparing }})
+  </a>
+  <a href="/admin/orders?status=shipping" class="status-tab-btn {% if current_status == 'shipping' %}active{% endif %}">
+    <i class="fa-solid fa-truck-fast text-blue-500"></i> Đang giao hàng ({{ status_counts.shipping }})
+  </a>
+  <a href="/admin/orders?status=delivered"
+    class="status-tab-btn {% if current_status == 'delivered' %}active{% endif %}">
+    <i class="fa-solid fa-circle-check text-green-500"></i> Đã giao thành công ({{ status_counts.delivered }})
+  </a>
+  <a href="/admin/orders?status=cancelled"
+    class="status-tab-btn {% if current_status == 'cancelled' %}active{% endif %}">
+    <i class="fa-solid fa-ban text-red-500"></i> Đã hủy ({{ status_counts.cancelled }})
+  </a>
+</div>
+
+<!-- DATA CARD -->
+<div class="admin-card">
+  <!-- TOOLBAR -->
+  <div class="table-toolbar">
+    <div class="search-input-wrap">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="orderSearch" class="search-input"
+        placeholder="Tìm theo mã đơn EVN, tên khách hàng hoặc SĐT..." value="{{ search_query or '' }}"
+        onkeyup="filterOrdersClient()">
+    </div>
+
+    <div style="font-size: 13px; color: var(--admin-text-muted);">
+      Hiển thị: <strong>{{ orders|length }}</strong> đơn hàng
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-responsive">
+    <table class="admin-table" id="ordersTable">
+      <thead>
+        <tr>
+          <th>Mã đơn</th>
+          <th>Khách hàng</th>
+          <th>SĐT nhận hàng</th>
+          <th>Địa chỉ nhận</th>
+          <th>Thanh toán</th>
+          <th>Tổng tiền</th>
+          <th>Cập nhật trạng thái</th>
+          <th>Thời gian</th>
+          <th style="text-align: right;">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if orders and orders|length > 0 %}
+        {% for o in orders %}
+        <tr data-status="{{ o.status }}">
+          <td>
+            <strong style="color: #111111; font-size: 13.5px;">{{ o.order_code }}</strong>
+          </td>
+          <td>
+            <div style="font-weight: 700;">{{ o.customer_name }}</div>
+            <div style="font-size: 11.5px; color: var(--admin-text-muted);">{{ o.customer_email or '' }}</div>
+          </td>
+          <td>
+            <strong>{{ o.customer_phone }}</strong>
+          </td>
+          <td style="max-width: 220px; font-size: 12.5px; color: var(--admin-text-muted);">
+            {{ o.shipping_address }}, {{ o.shipping_city }}
+          </td>
+          <td>
+            <span class="status-badge neutral" style="font-size: 11px;">{{ o.payment_method }}</span>
+          </td>
+          <td>
+            <strong style="color: var(--primary); font-size: 14px;">{{ "{:,.0f}".format(o.total_amount) }}đ</strong>
+          </td>
+          <td>
+            <form action="/admin/orders/update-status/{{ o.id }}" method="POST" style="margin: 0;">
+              <select name="status" class="select-filter" style="padding: 4px 8px; font-size: 12px; font-weight: 700;"
+                onchange="this.form.submit()">
+                <option value="pending_confirmation" {% if o.status=='pending_confirmation' %}selected{% endif %}>🕒
+                  Chờ xác nhận</option>
+                <option value="preparing" {% if o.status=='preparing' %}selected{% endif %}>📦 Chuẩn bị hàng</option>
+                <option value="shipping" {% if o.status=='shipping' %}selected{% endif %}>🚚 Đang giao hàng</option>
+                <option value="delivered" {% if o.status=='delivered' %}selected{% endif %}>✅ Đã giao thành công
+                </option>
+                <option value="cancelled" {% if o.status=='cancelled' %}selected{% endif %}>❌ Đã hủy đơn</option>
+              </select>
+            </form>
+          </td>
+          <td style="color: var(--admin-text-muted); font-size: 12px;">
+            {{ o.created_at[:16] if o.created_at else '' }}
+          </td>
+          <td style="text-align: right; white-space: nowrap;">
+            <button type="button" class="btn-admin-primary" style="padding: 6px 12px; font-size: 12px;"
+              onclick="viewOrderDetail({{ o.id }})" title="Xem chi tiết đơn">
+              <i class="fa-solid fa-eye"></i> Chi tiết
+            </button>
+            <form action="/admin/orders/delete/{{ o.id }}" method="POST" style="display: inline-block;"
+              onsubmit="return confirm('Bạn có chắc muốn xóa vĩnh viễn đơn hàng \'{{ o.order_code }}\'?');">
+              <button type="submit" class="btn-admin-secondary"
+                style="padding: 6px 10px; font-size: 12px; color: #EF4444; margin-left: 4px;" title="Xóa đơn">
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+          <td colspan="9" style="text-align: center; padding: 40px; color: var(--admin-text-muted);">
+            Không có đơn hàng nào thuộc bộ lọc này.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL: ORDER DETAIL -->
+<div class="admin-modal-backdrop" id="modalOrderDetail">
+  <div class="admin-modal" style="max-width: 650px;">
+    <div class="admin-modal-header">
+      <div>
+        <h3 class="modal-title" id="odOrderCode">Chi tiết đơn hàng</h3>
+        <p class="page-subtitle" id="odCreatedAt" style="margin-top: 2px;">Ngày đặt: ...</p>
+      </div>
+      <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalOrderDetail')">&times;</button>
+    </div>
+    <div class="admin-modal-body" id="modalOrderDetailBody">
+      <div style="text-align: center; padding: 24px;">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; color: var(--primary);"></i>
+        <p style="margin-top: 8px; color: var(--admin-text-muted);">Đang tải thông tin đơn hàng...</p>
+      </div>
+    </div>
+    <div class="admin-modal-footer">
+      <button type="button" class="btn-admin-secondary" onclick="closeAdminModal('modalOrderDetail')">Đóng</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function filterOrdersClient() {
+    const q = document.getElementById('orderSearch').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#ordersTable tbody tr');
+    rows.forEach(r => {
+      const text = r.textContent.toLowerCase();
+      r.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
+  }
+
+  async function viewOrderDetail(orderId) {
+    const modalBody = document.getElementById('modalOrderDetailBody');
+    modalBody.innerHTML = `
+      <div style="text-align: center; padding: 24px;">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; color: var(--primary);"></i>
+        <p style="margin-top: 8px; color: var(--admin-text-muted);">Đang tải thông tin đơn hàng...</p>
+      </div>
+    `;
+    openAdminModal('modalOrderDetail');
+
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`);
+      if (!res.ok) throw new Error('Không thể tải đơn hàng');
+      const data = await res.json();
+      const o = data.order;
+      const items = data.items || [];
+
+      document.getElementById('odOrderCode').textContent = `Đơn hàng #${o.order_code}`;
+      document.getElementById('odCreatedAt').textContent = `Thời gian đặt: ${o.created_at || '—'}`;
+
+      const formatVND = (num) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num || 0);
+
+      modalBody.innerHTML = `
+        <!-- CUSTOMER INFO SUMMARY -->
+        <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px; padding: 14px; margin-bottom: 20px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
+            <div><strong>Khách hàng:</strong> ${o.customer_name}</div>
+            <div><strong>SĐT:</strong> ${o.customer_phone}</div>
+            <div><strong>Email:</strong> ${o.customer_email || '—'}</div>
+            <div><strong>Thanh toán:</strong> ${o.payment_method}</div>
+            <div style="grid-column: 1 / -1;"><strong>Địa chỉ nhận:</strong> ${o.shipping_address}, ${o.shipping_city || ''}</div>
+            ${o.order_notes ? `<div style="grid-column: 1 / -1; color: #B45309;"><strong>Ghi chú:</strong> <em>"${o.order_notes}"</em></div>` : ''}
+          </div>
+        </div>
+
+        <!-- ITEMS LIST -->
+        <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 12px;">Sản phẩm đặt mua (${items.length} món)</h4>
+        <div style="margin-bottom: 20px;">
+          ${items.map(it => `
+            <div class="order-detail-item-row">
+              <img src="${it.product_image || '/static/images/placeholder.jpg'}" alt="${it.product_name}" class="order-detail-thumb" onerror="this.onerror=null; this.src='/static/images/placeholder.jpg'">
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 700; font-size: 13.5px; color: #111;">${it.product_name}</div>
+                <div style="font-size: 12px; color: var(--admin-text-muted); margin-top: 2px;">
+                  <span class="status-badge neutral" style="font-size: 10.5px; padding: 1px 6px; margin-right: 4px;"><i class="fa-solid fa-tag" style="font-size: 9px; margin-right: 3px;"></i>${it.category_name || 'Thời trang'}</span>
+                  Size: <strong>${it.size || 'L'}</strong> • Màu: <strong>${it.color || 'Tiêu chuẩn'}</strong> • SL: <strong>${it.quantity}</strong>
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-weight: 700; color: #111;">${formatVND(it.price * it.quantity)}</div>
+                <div style="font-size: 11px; color: var(--admin-text-muted);">${formatVND(it.price)} / chiếc</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- TOTALS BREAKDOWN -->
+        <div style="border-top: 1px dashed #E5E7EB; padding-top: 14px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 15px; font-weight: 700;">Tổng thanh toán đơn hàng:</span>
+          <span style="font-size: 18px; font-weight: 800; color: var(--primary);">${formatVND(o.total_amount)}</span>
+        </div>
+      `;
+    } catch (err) {
+      modalBody.innerHTML = `<div style="color: #EF4444; padding: 16px;">Lỗi khi tải chi tiết: ${err.message}</div>`;
+    }
+  }
+</script>
+{% endblock %}

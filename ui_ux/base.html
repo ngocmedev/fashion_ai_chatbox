@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{% block title %}Evern {% endblock %}</title>
+  <meta name="description"
+    content="Evern - Nền tảng tư vấn phong cách thời trang AI thông minh. Tìm outfit chuẩn vibe, gợi ý phối đồ và cập nhật xu hướng 2026.">
+
+  <!-- Google Fonts: Plus Jakarta Sans for clean editorial & high-fashion feel -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- FontAwesome 6 Vector Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Modular CSS System -->
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/animations.css">
+  <link rel="stylesheet" href="/static/css/responsive.css">
+
+  {% block head_extra %}{% endblock %}
+</head>
+
+<body>
+
+  <!-- Modular Header -->
+  {% include "components/header.html" %}
+
+  <!-- Main Dynamic Content Block -->
+  {% block content %}{% endblock %}
+
+  <!-- Modular Footer -->
+  {% include "components/footer.html" %}
+
+  <!-- Modular Floating Chat Bubble Widget -->
+  {% include "components/chat_widget.html" %}
+
+  <!-- Modular Modals & Bottom Navigation -->
+  {% include "components/modal.html" %}
+
+  <!-- Global Auth State -->
+  <script id="server-auth-data" type="application/json">
+    {{ (current_user | tojson) if current_user else 'null' }}
+  </script>
+  <script>
+    window.CURRENT_USER = JSON.parse(document.getElementById('server-auth-data').textContent || 'null');
+    window.IS_LOGGED_IN = Boolean(window.CURRENT_USER);
+  </script>
+
+  <!-- Modular Scripts -->
+  <script src="/static/js/ui.js"></script>
+  <script src="/static/js/cart.js"></script>
+  <script src="/static/js/products.js"></script>
+  <script src="/static/js/chat.js"></script>
+  <script src="/static/js/app.js"></script>
+
+  {% block scripts %}{% endblock %}
+</body>
+
+</html>

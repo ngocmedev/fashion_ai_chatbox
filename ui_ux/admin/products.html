@@ -1,0 +1,744 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Quản lý Sản phẩm | Evern. Admin{% endblock %}
+{% block breadcrumb %}Sản phẩm{% endblock %}
+
+{% block content %}
+<!-- PAGE HEADER -->
+<div class="page-header-row">
+  <div>
+    <h1 class="page-title">Quản lý Sản phẩm</h1>
+    <p class="page-subtitle">Kiểm soát danh mục sản phẩm, giá bán, cấu hình thuộc tính và trạng thái tồn kho.</p>
+  </div>
+  <div class="page-actions-group">
+    <button type="button" class="btn-admin-accent" onclick="openAddProductModal()">
+      <i class="fa-solid fa-plus"></i> Thêm sản phẩm mới
+    </button>
+  </div>
+</div>
+
+<!-- DATA CARD -->
+<div class="admin-card">
+  <!-- TOOLBAR -->
+  <div class="table-toolbar">
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; flex: 1;">
+      <div class="search-input-wrap">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="productSearch" class="search-input" placeholder="Tìm theo tên, mã sản phẩm hoặc tag..."
+          value="{{ search_query or '' }}" onkeyup="handleFilterProducts()">
+      </div>
+
+      <select id="filterCategory" class="select-filter" onchange="handleFilterProducts()">
+        <option value="">Tất cả danh mục</option>
+        {% for cat in categories %}
+        <option value="{{ cat.id }}" {% if selected_category_id == cat.id or selected_category == cat.name %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+
+      <select id="filterStock" class="select-filter" onchange="handleFilterProducts()">
+        <option value="">Tất cả trạng thái kho</option>
+        <option value="in_stock">Còn hàng (> 10)</option>
+        <option value="low_stock">Sắp hết hàng (1 - 10)</option>
+        <option value="out_of_stock">Hết hàng (0)</option>
+      </select>
+    </div>
+
+    <div style="font-size: 13px; color: var(--admin-text-muted);">
+      Hiển thị: <strong id="productDisplayCount">{{ products|length }}</strong> sản phẩm
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-responsive">
+    <table class="admin-table" id="productsTable">
+      <thead>
+        <tr>
+          <th style="width: 70px;">Ảnh</th>
+          <th>Mã & Tên sản phẩm</th>
+          <th>Danh mục</th>
+          <th>Giá bán lẻ</th>
+          <th style="text-align: center;">Tồn kho</th>
+          <th>Màu & Size</th>
+          <th style="text-align: right;">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if products and products|length > 0 %}
+        {% for p in products %}
+        <tr data-cat-id="{{ p.category_id or '' }}" data-stock="{{ p.stock or 0 }}">
+          <td>
+            <div
+              style="width: 48px; height: 58px; border-radius: 6px; overflow: hidden; background: #F3F4F6; border: 1px solid #E5E7EB;">
+              <img src="{{ p.image_url if p.image_url else '/static/images/placeholder.jpg' }}" alt="{{ p.name }}" style="width: 100%; height: 100%; object-fit: cover;"
+                onerror="this.onerror=null; this.src='/static/images/placeholder.jpg';">
+            </div>
+          </td>
+          <td>
+            <div style="font-size: 11.5px; font-weight: 700; color: var(--primary);">{{ p.code or ('EV' ~ p.id) }}</div>
+            <a href="/product/{{ p.id }}" target="_blank"
+              style="font-weight: 700; color: #111111; text-decoration: none; font-size: 13.5px;"
+              title="Xem trang sản phẩm">
+              {{ p.name }} <i class="fa-solid fa-arrow-up-right-from-square"
+                style="font-size: 10px; color: var(--admin-text-light);"></i>
+            </a>
+            {% if p.tags %}
+            <div style="margin-top: 3px;">
+              {% for tag in (p.tags.split(',') if p.tags else []) %}
+              <span class="status-badge neutral" style="font-size: 10px; padding: 1px 6px;">#{{ tag.strip() }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </td>
+          <td>
+            <a href="/admin/products?category_id={{ p.category_id }}" class="status-badge neutral" style="text-decoration: none;" title="Lọc theo danh mục này">
+              <i class="fa-solid fa-tag" style="font-size: 10px; margin-right: 3px;"></i>{{ p.category_name or p.category or 'Chưa phân loại' }}
+            </a>
+          </td>
+          <td>
+            <div style="font-weight: 800; color: #111111; font-size: 14px;">{{ "{:,.0f}".format(p.price) }}đ</div>
+            {% if p.old_price and p.old_price > p.price %}
+            <div style="font-size: 11.5px; color: var(--admin-text-light); text-decoration: line-through;">
+              {{ "{:,.0f}".format(p.old_price) }}đ
+            </div>
+            {% endif %}
+          </td>
+          <td style="text-align: center;">
+            {% set stock_num = p.stock if p.stock is not none else 50 %}
+            {% if stock_num <= 0 %} <span class="status-badge danger"><i class="fa-solid fa-triangle-exclamation"></i>
+              Hết hàng (0)</span>
+              {% elif stock_num <= 10 %} <span class="status-badge warning"><i class="fa-solid fa-clock"></i> Còn ít ({{
+                stock_num }})</span>
+                {% else %}
+                <span class="status-badge success">{{ stock_num }} chiếc</span>
+                {% endif %}
+          </td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 5px; font-size: 12px; margin-bottom: 2px;">
+              <span
+                style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: {{ p.color_hex or '#111' }}; border: 1px solid #D1D5DB;"></span>
+              <span>{{ p.color or 'Tiêu chuẩn' }}</span>
+            </div>
+            <div style="font-size: 11.5px; color: var(--admin-text-muted);">
+              Size: <strong>{{ p.sizes or 'S,M,L,XL' }}</strong>
+            </div>
+          </td>
+          <td style="text-align: right; white-space: nowrap;">
+            <button type="button" class="btn-admin-secondary" style="padding: 6px 10px; font-size: 12px;"
+              onclick="openEditProductModal({{ p.id }})" title="Chỉnh sửa sản phẩm">
+              <i class="fa-solid fa-pen-to-square"></i> Sửa
+            </button>
+            <form action="/admin/products/delete/{{ p.id }}" method="POST" style="display: inline-block;"
+              onsubmit="return confirm('Bạn có chắc chắn muốn xóa sản phẩm \'{{ p.name }}\'? Hành động này không thể hoàn tác.');">
+              <button type="submit" class="btn-admin-secondary"
+                style="padding: 6px 10px; font-size: 12px; color: #EF4444; margin-left: 4px;" title="Xóa">
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 40px; color: var(--admin-text-muted);">
+            Không tìm thấy sản phẩm nào phù hợp điều kiện lọc.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL: ADD PRODUCT -->
+<div class="admin-modal-backdrop" id="modalAddProduct">
+  <div class="admin-modal" style="max-width: 680px;">
+    <div class="admin-modal-header">
+      <h3 class="modal-title">Thêm sản phẩm thời trang mới</h3>
+      <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalAddProduct')">&times;</button>
+    </div>
+    <form action="/admin/products/add" method="POST" enctype="multipart/form-data" onsubmit="return validateAddProductForm()">
+      <div class="admin-modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tên sản phẩm <span style="color: #EF4444;">*</span></label>
+            <input type="text" name="name" class="form-input" placeholder="Ví dụ: Áo Sơ Mi Lụa Hàn Quốc" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mã sản phẩm (Code)</label>
+            <input type="text" name="code" class="form-input" placeholder="EVN-SM01">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Danh mục sản phẩm <span style="color: #EF4444;">*</span></label>
+            <select name="category_id" class="form-select" required>
+              {% for cat in categories %}
+              <option value="{{ cat.id }}">{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Số lượng tồn kho ban đầu <span style="color: #EF4444;">*</span></label>
+            <input type="number" name="stock" class="form-input" value="50" min="0" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Giá bán lẻ (VND) <span style="color: #EF4444;">*</span></label>
+            <input type="number" name="price" class="form-input" placeholder="350000" min="0" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Giá niêm yết cũ (VND)</label>
+            <input type="number" name="old_price" class="form-input" placeholder="420000" min="0">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Màu sắc</label>
+            <input type="text" name="color" class="form-input" placeholder="Trắng kem / Đen / Be">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mã màu (Hex)</label>
+            <input type="text" name="color_hex" class="form-input" placeholder="#F3E5AB" value="#111111">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Các Size (cách nhau bằng dấu phẩy)</label>
+            <input type="text" name="sizes" class="form-input" placeholder="S, M, L, XL" value="S, M, L, XL">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Form dáng (Fit)</label>
+            <input type="text" name="fit" class="form-input" placeholder="Regular fit, Oversize, Slimfit">
+          </div>
+        </div>
+
+        <div class="form-group" style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 16px;">
+          <label class="form-label" style="font-weight: 600; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span>📸 Bộ sưu tập hình ảnh sản phẩm <span style="color: #EF4444;">*</span></span>
+            <span style="font-size: 12px; color: #64748B; font-weight: normal;">(Chọn được nhiều ảnh cùng lúc)</span>
+          </label>
+
+          <!-- Tải nhiều tệp ảnh trực tiếp từ máy tính -->
+          <div style="margin-bottom: 12px;">
+            <label class="form-label" style="font-size: 13px; color: #334155; margin-bottom: 4px;">📁 Chọn tệp ảnh tải lên từ máy tính (giữ phím Ctrl hoặc kéo chọn nhiều ảnh):</label>
+            <input type="file" name="image_files" id="addProdImageFiles" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif" multiple class="form-input" style="padding: 8px; cursor: pointer; background: #FFFFFF;" onchange="previewAddFiles(this)">
+          </div>
+
+          <!-- Dán nhiều URL online -->
+          <div style="margin-bottom: 12px;">
+            <label class="form-label" style="font-size: 13px; color: #64748B; margin-bottom: 4px;">Hoặc dán link URL hình ảnh online (mỗi dòng 1 link hoặc cách nhau dấu phẩy):</label>
+            <textarea name="image_urls" id="addProdImageUrls" class="form-textarea" rows="2" placeholder="https://images.unsplash.com/...&#10;https://..." oninput="previewAddUrls()"></textarea>
+          </div>
+
+          <!-- Khung xem trước danh sách nhiều ảnh -->
+          <div id="addProdPreviewBox" style="display: none; background: #FFFFFF; padding: 12px; border-radius: 8px; border: 1px solid #E2E8F0;">
+            <div style="font-size: 12.5px; font-weight: 600; color: #0F172A; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+              <span id="addProdPreviewCount">Danh sách ảnh đã chọn (0 ảnh)</span>
+              <span style="font-size: 11.5px; color: #059669; font-weight: 500;">★ Ảnh đầu tiên sẽ là ảnh bìa chính</span>
+            </div>
+            <div id="addProdPreviewGrid" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tags nhận diện AI Stylist (phân tách dấu phẩy)</label>
+          <input type="text" name="tags" class="form-input" placeholder="thanhlich, henho, congso, vintage">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mô tả sản phẩm</label>
+          <textarea name="description" class="form-textarea" rows="3"
+            placeholder="Chi tiết chất liệu, hướng dẫn phối đồ và bảo quản..."></textarea>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin-secondary" onclick="closeAdminModal('modalAddProduct')">Hủy</button>
+        <button type="submit" class="btn-admin-accent">Lưu sản phẩm</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: EDIT PRODUCT -->
+<div class="admin-modal-backdrop" id="modalEditProduct">
+  <div class="admin-modal" style="max-width: 680px;">
+    <div class="admin-modal-header">
+      <h3 class="modal-title">Chỉnh sửa thông tin sản phẩm</h3>
+      <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalEditProduct')">&times;</button>
+    </div>
+    <form id="formEditProduct" method="POST" enctype="multipart/form-data">
+      <div class="admin-modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tên sản phẩm <span style="color: #EF4444;">*</span></label>
+            <input type="text" name="name" id="editProdName" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mã sản phẩm (Code)</label>
+            <input type="text" name="code" id="editProdCode" class="form-input">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Danh mục sản phẩm <span style="color: #EF4444;">*</span></label>
+            <select name="category_id" id="editProdCatId" class="form-select" required>
+              {% for cat in categories %}
+              <option value="{{ cat.id }}">{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tồn kho hiện tại <span style="color: #EF4444;">*</span></label>
+            <input type="number" name="stock" id="editProdStock" class="form-input" min="0" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Giá bán lẻ (VND) <span style="color: #EF4444;">*</span></label>
+            <input type="number" name="price" id="editProdPrice" class="form-input" min="0" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Giá niêm yết cũ (VND)</label>
+            <input type="number" name="old_price" id="editProdOldPrice" class="form-input" min="0">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Màu sắc</label>
+            <input type="text" name="color" id="editProdColor" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mã màu (Hex)</label>
+            <input type="text" name="color_hex" id="editProdColorHex" class="form-input">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Các Size</label>
+            <input type="text" name="sizes" id="editProdSizes" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Form dáng (Fit)</label>
+            <input type="text" name="fit" id="editProdFit" class="form-input">
+          </div>
+        </div>
+
+        <div class="form-group" style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 16px;">
+          <label class="form-label" style="font-weight: 600; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span>📸 Quản lý bộ sưu tập ảnh sản phẩm</span>
+            <span style="font-size: 12px; color: #64748B; font-weight: normal;">(Có thể xóa ảnh cũ hoặc thêm nhiều ảnh mới)</span>
+          </label>
+
+          <!-- Danh sách ảnh hiện tại đang có -->
+          <div style="margin-bottom: 14px;">
+            <div style="font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Ảnh hiện có của sản phẩm này:</div>
+            <input type="hidden" name="has_existing_images_field" value="1">
+            <div id="editProdExistingGrid" style="display: flex; flex-wrap: wrap; gap: 10px; min-height: 48px; background: #FFFFFF; padding: 10px; border-radius: 8px; border: 1px solid #E2E8F0; align-items: center;">
+              <!-- Javascript populates existing images with delete buttons -->
+            </div>
+          </div>
+
+          <!-- Tải thêm tệp ảnh mới từ máy tính -->
+          <div style="margin-bottom: 12px;">
+            <label class="form-label" style="font-size: 13px; color: #334155; margin-bottom: 4px;">📁 Tải thêm ảnh mới từ máy tính (chọn nhiều ảnh cùng lúc):</label>
+            <input type="file" name="image_files" id="editProdImageFiles" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif" multiple class="form-input" style="padding: 8px; cursor: pointer; background: #FFFFFF;" onchange="previewEditNewFiles(this)">
+          </div>
+
+          <!-- Dán thêm URL mới -->
+          <div>
+            <label class="form-label" style="font-size: 13px; color: #64748B; margin-bottom: 4px;">Hoặc dán thêm URL ảnh online mới (mỗi dòng 1 link):</label>
+            <textarea name="image_urls" id="editProdImageUrls" class="form-textarea" rows="2" placeholder="https://..." oninput="previewEditNewUrls()"></textarea>
+          </div>
+
+          <!-- Khung xem trước các ảnh mới sắp thêm -->
+          <div id="editProdNewPreviewBox" style="display: none; margin-top: 10px; background: #FFFFFF; padding: 10px; border-radius: 8px; border: 1px dashed #059669;">
+            <div style="font-size: 12px; font-weight: 600; color: #059669; margin-bottom: 6px;" id="editProdNewCount">+ Ảnh mới sắp thêm:</div>
+            <div id="editProdNewGrid" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tags nhận diện</label>
+          <input type="text" name="tags" id="editProdTags" class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mô tả sản phẩm</label>
+          <textarea name="description" id="editProdDesc" class="form-textarea" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin-secondary" onclick="closeAdminModal('modalEditProduct')">Hủy</button>
+        <button type="submit" class="btn-admin-primary">Cập nhật thay đổi</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script id="admin-products-data" type="application/json">
+  {{ products | tojson }}
+</script>
+<script>
+  const allProductsList = JSON.parse(document.getElementById('admin-products-data').textContent || '[]');
+
+  // --- ADD PRODUCT PREVIEWS ---
+  let addSelectedFiles = [];
+  function previewAddFiles(input) {
+    const grid = document.getElementById('addProdPreviewGrid');
+    const box = document.getElementById('addProdPreviewBox');
+    const countEl = document.getElementById('addProdPreviewCount');
+    grid.innerHTML = '';
+    
+    const files = Array.from(input.files || []);
+    if (!files.length && !document.getElementById('addProdImageUrls').value.trim()) {
+      box.style.display = 'none';
+      return;
+    }
+
+    box.style.display = 'block';
+    let totalCount = files.length;
+
+    files.forEach((file, idx) => {
+      const card = document.createElement('div');
+      card.style.cssText = 'position: relative; width: 72px; height: 72px; border-radius: 8px; overflow: hidden; border: 1.5px solid #CBD5E1; background: #F1F5F9; box-shadow: 0 1px 3px rgba(0,0,0,0.08);';
+      
+      const img = document.createElement('img');
+      img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+      img.alt = file.name;
+      
+      const reader = new FileReader();
+      reader.onload = e => { img.src = e.target.result; };
+      reader.readAsDataURL(file);
+      card.appendChild(img);
+
+      if (idx === 0) {
+        const badge = document.createElement('div');
+        badge.style.cssText = 'position: absolute; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.85); color: #FFF; font-size: 9px; text-align: center; padding: 2px 0; font-weight: 600;';
+        badge.textContent = 'Ảnh bìa';
+        card.appendChild(badge);
+      }
+      grid.appendChild(card);
+    });
+
+    previewAddUrls();
+  }
+
+  function previewAddUrls() {
+    const raw = document.getElementById('addProdImageUrls').value.trim();
+    const grid = document.getElementById('addProdPreviewGrid');
+    const box = document.getElementById('addProdPreviewBox');
+    const countEl = document.getElementById('addProdPreviewCount');
+
+    // Remove existing URL previews from grid
+    grid.querySelectorAll('.url-preview-card').forEach(c => c.remove());
+
+    const urls = raw ? raw.replace(/,/g, '\n').split('\n').map(u => u.trim()).filter(Boolean) : [];
+    const filesCount = document.getElementById('addProdImageFiles').files ? document.getElementById('addProdImageFiles').files.length : 0;
+    const totalCount = filesCount + urls.length;
+
+    if (totalCount === 0) {
+      box.style.display = 'none';
+      return;
+    }
+
+    box.style.display = 'block';
+    countEl.textContent = `Danh sách ảnh đã chọn (${totalCount} ảnh)`;
+
+    urls.forEach((url, idx) => {
+      const card = document.createElement('div');
+      card.className = 'url-preview-card';
+      card.style.cssText = 'position: relative; width: 72px; height: 72px; border-radius: 8px; overflow: hidden; border: 1.5px solid #0284C7; background: #F1F5F9; box-shadow: 0 1px 3px rgba(0,0,0,0.08);';
+      
+      const img = document.createElement('img');
+      img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+      img.src = url;
+      img.onerror = function() { this.src = '/static/images/placeholder.jpg'; };
+      card.appendChild(img);
+
+      if (filesCount === 0 && idx === 0) {
+        const badge = document.createElement('div');
+        badge.style.cssText = 'position: absolute; bottom: 0; left: 0; right: 0; background: rgba(2, 132, 199, 0.9); color: #FFF; font-size: 9px; text-align: center; padding: 2px 0; font-weight: 600;';
+        badge.textContent = 'Ảnh bìa';
+        card.appendChild(badge);
+      }
+      grid.appendChild(card);
+    });
+  }
+
+  function validateAddProductForm() {
+    const fileInput = document.getElementById('addProdImageFiles');
+    const urlInput = document.getElementById('addProdImageUrls');
+    const hasFiles = fileInput && fileInput.files && fileInput.files.length > 0;
+    const hasUrls = urlInput && urlInput.value && urlInput.value.trim().length > 0;
+    if (!hasFiles && !hasUrls) {
+      alert('Vui lòng chọn ít nhất 1 ảnh tải lên từ máy tính hoặc dán URL hình ảnh cho sản phẩm!');
+      if (fileInput) fileInput.focus();
+      return false;
+    }
+    return true;
+  }
+
+  function openAddProductModal() {
+    const fileInput = document.getElementById('addProdImageFiles');
+    if (fileInput) fileInput.value = '';
+    const urlInput = document.getElementById('addProdImageUrls');
+    if (urlInput) urlInput.value = '';
+    const grid = document.getElementById('addProdPreviewGrid');
+    if (grid) grid.innerHTML = '';
+    const box = document.getElementById('addProdPreviewBox');
+    if (box) box.style.display = 'none';
+    openAdminModal('modalAddProduct');
+  }
+
+  // --- EDIT PRODUCT PREVIEWS & EXISTING IMAGES ---
+  function renderExistingImages(images) {
+    const container = document.getElementById('editProdExistingGrid');
+    container.innerHTML = '';
+    if (!images || !images.length) {
+      container.innerHTML = '<span style="font-size: 13px; color: #94A3B8; font-style: italic;">Chưa có ảnh nào. Hãy tải lên ảnh mới bên dưới.</span>';
+      return;
+    }
+
+    images.forEach((imgUrl, idx) => {
+      const card = document.createElement('div');
+      card.className = 'edit-existing-card';
+      card.style.cssText = 'position: relative; width: 72px; height: 72px; border-radius: 8px; overflow: hidden; border: 1.5px solid #CBD5E1; background: #F8FAFC;';
+      
+      const img = document.createElement('img');
+      img.src = imgUrl;
+      img.alt = 'Ảnh sản phẩm';
+      img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+      img.onerror = function() { this.onerror = null; this.src = '/static/images/placeholder.jpg'; };
+      card.appendChild(img);
+
+      // Hidden input to submit retained image
+      const hiddenInput = document.createElement('input');
+      hiddenInput.type = 'hidden';
+      hiddenInput.name = 'existing_images';
+      hiddenInput.value = imgUrl;
+      card.appendChild(hiddenInput);
+
+      // Remove button
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.innerHTML = '&times;';
+      removeBtn.title = 'Xóa ảnh này';
+      removeBtn.style.cssText = 'position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 50%; background: #EF4444; color: #FFF; border: none; font-size: 14px; font-weight: bold; line-height: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.2);';
+      removeBtn.onclick = function() {
+        card.remove();
+        updateExistingBadges();
+      };
+      card.appendChild(removeBtn);
+
+      if (idx === 0) {
+        const badge = document.createElement('div');
+        badge.className = 'cover-badge';
+        badge.style.cssText = 'position: absolute; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.85); color: #FFF; font-size: 9px; text-align: center; padding: 2px 0; font-weight: 600;';
+        badge.textContent = 'Ảnh bìa';
+        card.appendChild(badge);
+      }
+
+      container.appendChild(card);
+    });
+  }
+
+  function updateExistingBadges() {
+    const container = document.getElementById('editProdExistingGrid');
+    const cards = container.querySelectorAll('.edit-existing-card');
+    cards.forEach((card, idx) => {
+      const oldBadge = card.querySelector('.cover-badge');
+      if (oldBadge) oldBadge.remove();
+      if (idx === 0) {
+        const badge = document.createElement('div');
+        badge.className = 'cover-badge';
+        badge.style.cssText = 'position: absolute; bottom: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.85); color: #FFF; font-size: 9px; text-align: center; padding: 2px 0; font-weight: 600;';
+        badge.textContent = 'Ảnh bìa';
+        card.appendChild(badge);
+      }
+    });
+    if (!cards.length) {
+      container.innerHTML = '<span style="font-size: 13px; color: #94A3B8; font-style: italic;">Đã xóa hết ảnh cũ. Hãy chọn tải ảnh mới bên dưới.</span>';
+    }
+  }
+
+  function previewEditNewFiles(input) {
+    const grid = document.getElementById('editProdNewGrid');
+    const box = document.getElementById('editProdNewPreviewBox');
+    const countEl = document.getElementById('editProdNewCount');
+    grid.innerHTML = '';
+    
+    const files = Array.from(input.files || []);
+    if (!files.length && !document.getElementById('editProdImageUrls').value.trim()) {
+      box.style.display = 'none';
+      return;
+    }
+
+    box.style.display = 'block';
+    countEl.textContent = `+ Thêm ${files.length} tệp ảnh mới từ máy tính`;
+
+    files.forEach(file => {
+      const card = document.createElement('div');
+      card.style.cssText = 'position: relative; width: 60px; height: 60px; border-radius: 8px; overflow: hidden; border: 1.5px solid #059669; background: #F1F5F9;';
+      
+      const img = document.createElement('img');
+      img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+      img.alt = file.name;
+      
+      const reader = new FileReader();
+      reader.onload = e => { img.src = e.target.result; };
+      reader.readAsDataURL(file);
+      card.appendChild(img);
+      grid.appendChild(card);
+    });
+
+    previewEditNewUrls();
+  }
+
+  function previewEditNewUrls() {
+    const raw = document.getElementById('editProdImageUrls').value.trim();
+    const grid = document.getElementById('editProdNewGrid');
+    const box = document.getElementById('editProdNewPreviewBox');
+    const countEl = document.getElementById('editProdNewCount');
+
+    grid.querySelectorAll('.url-new-preview').forEach(c => c.remove());
+
+    const urls = raw ? raw.replace(/,/g, '\n').split('\n').map(u => u.trim()).filter(Boolean) : [];
+    const filesCount = document.getElementById('editProdImageFiles').files ? document.getElementById('editProdImageFiles').files.length : 0;
+    const totalNew = filesCount + urls.length;
+
+    if (totalNew === 0) {
+      box.style.display = 'none';
+      return;
+    }
+
+    box.style.display = 'block';
+    countEl.textContent = `+ Thêm ${totalNew} ảnh mới (${filesCount} tệp, ${urls.length} URL)`;
+
+    urls.forEach(url => {
+      const card = document.createElement('div');
+      card.className = 'url-new-preview';
+      card.style.cssText = 'position: relative; width: 60px; height: 60px; border-radius: 8px; overflow: hidden; border: 1.5px solid #0284C7; background: #F1F5F9;';
+      
+      const img = document.createElement('img');
+      img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+      img.src = url;
+      img.onerror = function() { this.src = '/static/images/placeholder.jpg'; };
+      card.appendChild(img);
+      grid.appendChild(card);
+    });
+  }
+
+  async function openEditProductModal(prodId) {
+    let p = allProductsList.find(item => item.id === prodId);
+    if (!p || !p.gallery_images) {
+      try {
+        const res = await fetch(`/api/admin/products/${prodId}`);
+        if (res.ok) {
+          const data = await res.json();
+          p = data.product;
+        }
+      } catch (e) {
+        console.error('Lỗi tải sản phẩm:', e);
+      }
+    }
+    if (!p) {
+      alert('Không tìm thấy thông tin sản phẩm!');
+      return;
+    }
+
+    document.getElementById('formEditProduct').action = `/admin/products/edit/${p.id}`;
+    document.getElementById('editProdName').value = p.name || '';
+    document.getElementById('editProdCode').value = p.code || '';
+    document.getElementById('editProdCatId').value = p.category_id || '';
+    document.getElementById('editProdStock').value = (p.stock !== null && p.stock !== undefined) ? p.stock : 50;
+    document.getElementById('editProdPrice').value = p.price || 0;
+    document.getElementById('editProdOldPrice').value = p.old_price || 0;
+    document.getElementById('editProdColor').value = p.color || '';
+    document.getElementById('editProdColorHex').value = p.color_hex || '#111111';
+    document.getElementById('editProdSizes').value = p.sizes || 'S, M, L, XL';
+    document.getElementById('editProdFit').value = p.fit || '';
+
+    // Lấy danh sách ảnh hiện có của sản phẩm
+    let currentImages = [];
+    if (p.gallery_images && Array.isArray(p.gallery_images) && p.gallery_images.length > 0) {
+      currentImages = [...p.gallery_images];
+    } else if (p.images) {
+      try {
+        const parsed = typeof p.images === 'string' ? JSON.parse(p.images) : p.images;
+        if (Array.isArray(parsed)) currentImages = parsed.filter(Boolean);
+      } catch (e) {
+        currentImages = String(p.images).split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+    if (!currentImages.length && p.image_url) {
+      currentImages = [p.image_url];
+    }
+
+    renderExistingImages(currentImages);
+
+    // Reset các trường thêm ảnh mới
+    const editFilesInput = document.getElementById('editProdImageFiles');
+    if (editFilesInput) editFilesInput.value = '';
+    const editUrlsInput = document.getElementById('editProdImageUrls');
+    if (editUrlsInput) editUrlsInput.value = '';
+    const newGrid = document.getElementById('editProdNewGrid');
+    if (newGrid) newGrid.innerHTML = '';
+    const newBox = document.getElementById('editProdNewPreviewBox');
+    if (newBox) newBox.style.display = 'none';
+
+    document.getElementById('editProdTags').value = p.tags || '';
+    document.getElementById('editProdDesc').value = p.description || '';
+    openAdminModal('modalEditProduct');
+  }
+
+  function handleFilterProducts() {
+    const q = document.getElementById('productSearch').value.toLowerCase().trim();
+    const catVal = document.getElementById('filterCategory').value;
+    const stockFilter = document.getElementById('filterStock').value;
+    const rows = document.querySelectorAll('#productsTable tbody tr');
+    let visibleCount = 0;
+
+    rows.forEach(r => {
+      const text = r.textContent.toLowerCase();
+      const rCatId = r.getAttribute('data-cat-id') || '';
+      const rStock = parseInt(r.getAttribute('data-stock') || '0', 10);
+
+      let matchSearch = !q || text.includes(q);
+      let matchCat = !catVal || rCatId === catVal;
+      let matchStock = true;
+
+      if (stockFilter === 'in_stock') matchStock = rStock > 10;
+      else if (stockFilter === 'low_stock') matchStock = rStock > 0 && rStock <= 10;
+      else if (stockFilter === 'out_of_stock') matchStock = rStock <= 0;
+
+      if (matchSearch && matchCat && matchStock) {
+        r.style.display = '';
+        visibleCount++;
+      } else {
+        r.style.display = 'none';
+      }
+    });
+
+    const displayCountEl = document.getElementById('productDisplayCount');
+    if (displayCountEl) displayCountEl.textContent = visibleCount;
+  }
+
+  // Auto trigger filter on load if pre-selected
+  document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('filterCategory').value) {
+      handleFilterProducts();
+    }
+  });
+</script>
+{% endblock %}

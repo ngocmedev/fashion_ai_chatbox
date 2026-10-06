@@ -1,0 +1,161 @@
+<!-- ========================================================================
+     MOBILE BOTTOM NAVIGATION (Fixed, Clean, Touch-Optimized)
+     ======================================================================== -->
+<nav class="mobile-bottom-nav" aria-label="Thanh điều hướng di động">
+  <ul class="bottom-nav-list">
+    <li class="bottom-nav-item">
+      <a href="/#hero" class="bottom-nav-btn active" data-nav="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+        <span>Home</span>
+      </a>
+    </li>
+    <li class="bottom-nav-item">
+      <a href="/#liveSection" class="bottom-nav-btn" data-nav="explore">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="10" />
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+        </svg>
+        <span>Explore</span>
+      </a>
+    </li>
+    <li class="bottom-nav-item">
+      <button class="bottom-nav-btn" data-nav="style" onclick="Chat.openChat();">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+        <span>Stylist</span>
+      </button>
+    </li>
+    <li class="bottom-nav-item">
+      <button class="bottom-nav-btn" data-nav="saved" onclick="Wishlist.open();">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path
+            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+        </svg>
+        <span>Saved</span>
+      </button>
+    </li>
+    <li class="bottom-nav-item">
+      {% if current_user %}
+      <a href="/logout" class="bottom-nav-btn" data-nav="profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        <span>Thoát</span>
+      </a>
+      {% else %}
+      <a href="/login" class="bottom-nav-btn" data-nav="profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        <span>Login</span>
+      </a>
+      {% endif %}
+    </li>
+  </ul>
+</nav>
+
+<!-- ========================================================================
+     PRODUCT QUICK VIEW MODAL
+     ======================================================================== -->
+<div class="modal-backdrop" id="productModal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-content-panel">
+    <button class="btn-close-modal" onclick="UI.closeProductModal()" aria-label="Đóng cửa sổ">
+      &times;
+    </button>
+    <div id="modalBody">
+      <!-- Injected via UI.openProductModal() -->
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================
+     SLIDE-OVER SHOPPING CART DRAWER
+     ======================================================================== -->
+<div class="cart-drawer-backdrop" id="cartDrawerBackdrop">
+  <div class="cart-drawer-panel" id="cartDrawerPanel">
+    <div class="cart-drawer-header">
+      <div class="cart-drawer-title-wrap">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        <h3 class="cart-drawer-title">GIỎ HÀNG CỦA BẠN (<span id="cartDrawerCount">0</span>)</h3>
+      </div>
+      <button class="btn-close-cart" id="btnCloseCart" aria-label="Đóng giỏ hàng">&times;</button>
+    </div>
+
+    <!-- Scrollable Items List -->
+    <div class="cart-drawer-body" id="cartDrawerItems">
+      <!-- Injected via Cart.renderDrawer() -->
+    </div>
+
+    <!-- Drawer Footer -->
+    <div class="cart-drawer-footer" id="cartDrawerFooter">
+      <div class="cart-summary-row">
+        <span class="cart-subtotal-label">Tạm tính:</span>
+        <span class="cart-subtotal-value" id="cartSubtotal">0đ</span>
+      </div>
+      <p class="cart-shipping-note">
+        <i class="fa-solid fa-truck-fast"></i> Miễn phí vận chuyển toàn quốc cho mọi đơn hàng
+      </p>
+      <button class="btn-primary btn-checkout" id="btnCheckout" onclick="Cart.checkout()">
+        TIẾN HÀNH THANH TOÁN
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+      <button class="btn-secondary btn-continue-shopping" onclick="Cart.close()">
+        Tiếp tục xem sản phẩm
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================
+     SLIDE-OVER WISHLIST / FAVORITES DRAWER (Matching Cart Drawer UI)
+     ======================================================================== -->
+<div class="cart-drawer-backdrop" id="wishlistDrawerBackdrop">
+  <div class="cart-drawer-panel" id="wishlistDrawerPanel">
+    <div class="cart-drawer-header">
+      <div class="cart-drawer-title-wrap">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--accent-color, #FF4D30)" stroke="var(--accent-color, #FF4D30)" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+        </svg>
+        <h3 class="cart-drawer-title">MỤC YÊU THÍCH CỦA BẠN (<span id="wishlistDrawerCount">0</span>)</h3>
+      </div>
+      <button class="btn-close-cart" id="btnCloseWishlist" aria-label="Đóng danh sách yêu thích">&times;</button>
+    </div>
+
+    <!-- Scrollable Items List -->
+    <div class="cart-drawer-body" id="wishlistDrawerItems">
+      <!-- Injected via Wishlist.renderDrawer() -->
+    </div>
+
+    <!-- Drawer Footer -->
+    <div class="cart-drawer-footer" id="wishlistDrawerFooter">
+      <div class="cart-summary-row">
+        <span class="cart-subtotal-label">Tổng sản phẩm:</span>
+        <span class="cart-subtotal-value" id="wishlistSummaryCount">0 món đồ</span>
+      </div>
+      <p class="cart-shipping-note" style="color: #4B5563;">
+        <i class="fa-solid fa-heart" style="color: var(--accent-color, #FF4D30);"></i> Lưu trữ outfit gu của bạn để nhận gợi ý phối đồ AI
+      </p>
+      <button class="btn-primary btn-checkout" id="btnWishlistAddAll" onclick="Wishlist.addAllToCart()">
+        <i class="fa-solid fa-cart-arrow-down" style="margin-right: 6px;"></i>
+        THÊM TẤT CẢ VÀO GIỎ HÀNG
+      </button>
+      <button class="btn-secondary btn-continue-shopping" onclick="Wishlist.close()">
+        Tiếp tục xem sản phẩm
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notifications Container -->
+<div class="toast-container" id="toastContainer"></div>
+

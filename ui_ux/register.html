@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Đăng Ký Tài Khoản | Evern — Fashion AI Stylist{% endblock %}
+
+{% block content %}
+<div class="auth-page-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-brand-badge">Evern<span class="brand-dot">.</span></div>
+      <h1 class="auth-title">Gia Nhập Evern</h1>
+      <p class="auth-subtitle">Tạo tài khoản để nhận tư vấn riêng từ AI Stylist và lưu trữ outfit yêu thích</p>
+    </div>
+
+    {% if error %}
+    <div class="auth-alert-error">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <form action="/register" method="POST" class="auth-form">
+      <input type="hidden" name="next" value="{{ next_url or '' }}">
+      <div class="auth-form-group">
+        <label for="full_name" class="auth-label">Họ và tên của bạn</label>
+        <div class="auth-input-wrap">
+          <i class="fa-regular fa-id-card auth-input-icon"></i>
+          <input 
+            type="text" 
+            id="full_name" 
+            name="full_name" 
+            class="auth-input" 
+            placeholder="Ví dụ: Hoàng Nam" 
+            value="{{ full_name or '' }}"
+            required
+            autofocus
+          >
+        </div>
+      </div>
+
+      <div class="auth-form-group">
+        <label for="username" class="auth-label">Tên người dùng (Username)</label>
+        <div class="auth-input-wrap">
+          <i class="fa-regular fa-user auth-input-icon"></i>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            class="auth-input" 
+            placeholder="Viết liền không dấu, VD: hoangnam26" 
+            value="{{ username or '' }}"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="auth-form-group">
+        <label for="email" class="auth-label">Địa chỉ Email</label>
+        <div class="auth-input-wrap">
+          <i class="fa-regular fa-envelope auth-input-icon"></i>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            class="auth-input" 
+            placeholder="name@example.com" 
+            value="{{ email or '' }}"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="auth-form-group">
+        <label for="phone" class="auth-label">Số điện thoại (tùy chọn)</label>
+        <div class="auth-input-wrap">
+          <i class="fa-solid fa-phone auth-input-icon"></i>
+          <input 
+            type="tel" 
+            id="phone" 
+            name="phone" 
+            class="auth-input" 
+            placeholder="0912 345 678" 
+            value="{{ phone or '' }}"
+          >
+        </div>
+      </div>
+
+      <div class="auth-form-group">
+        <label for="password" class="auth-label">Mật khẩu</label>
+        <div class="auth-input-wrap">
+          <i class="fa-solid fa-lock auth-input-icon"></i>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            class="auth-input" 
+            placeholder="Tối thiểu 6 ký tự..." 
+            minlength="6"
+            required
+          >
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary auth-submit-btn">
+        Tạo Tài Khoản Thành Viên
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+    </form>
+
+    <div class="auth-footer-link">
+      Đã có tài khoản? <a href="/login{% if next_url %}?next={{ next_url }}{% endif %}">Đăng nhập ngay</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

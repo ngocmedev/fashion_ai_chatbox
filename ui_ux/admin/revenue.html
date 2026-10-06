@@ -1,0 +1,285 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Thống kê Doanh thu | Evern. Admin{% endblock %}
+{% block breadcrumb %}Thống kê doanh thu{% endblock %}
+
+{% block head_extra %}
+<style>
+  .revenue-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+
+  .rev-stat-card {
+    background: #FFFFFF;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .rev-stat-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--admin-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+
+  .rev-stat-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--admin-text-main);
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+
+  .rev-stat-sub {
+    font-size: 12px;
+    color: #10B981;
+    font-weight: 600;
+  }
+
+  /* Date Filter Bar */
+  .date-filter-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #FFFFFF;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-md);
+    padding: 12px 18px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .date-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .date-input-group input[type="date"] {
+    padding: 6px 10px;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- PAGE HEADER -->
+<div class="page-header-row">
+  <div>
+    <h1 class="page-title">Thống kê Doanh thu & Dòng tiền</h1>
+    <p class="page-subtitle">Phân tích kết quả kinh doanh bán hàng thời trang theo ngày, tháng, năm và khoảng thời gian.
+    </p>
+  </div>
+  <div class="page-actions-group">
+    <button type="button" class="btn-admin-secondary" onclick="window.print()">
+      <i class="fa-solid fa-print"></i> In báo cáo tài chính
+    </button>
+  </div>
+</div>
+
+<!-- 4 REVENUE METRIC CARDS -->
+<div class="revenue-stats-grid">
+  <!-- 1: TODAY -->
+  <div class="rev-stat-card">
+    <div class="rev-stat-title">Doanh thu Hôm nay</div>
+    <div class="rev-stat-val" style="color: #10B981;">{{ "{:,.0f}".format(rev_today) }}đ</div>
+    <div class="rev-stat-sub">
+      <i class="fa-regular fa-calendar-check"></i> {{ orders_today_count }} đơn hoàn thành hôm nay
+    </div>
+  </div>
+
+  <!-- 2: THIS MONTH -->
+  <div class="rev-stat-card">
+    <div class="rev-stat-title">Doanh thu Tháng này</div>
+    <div class="rev-stat-val">{{ "{:,.0f}".format(rev_this_month) }}đ</div>
+    <div class="rev-stat-sub">
+      <i class="fa-solid fa-arrow-trend-up"></i> Tăng trưởng dòng tiền
+    </div>
+  </div>
+
+  <!-- 3: THIS YEAR -->
+  <div class="rev-stat-card">
+    <div class="rev-stat-title">Doanh thu Năm nay</div>
+    <div class="rev-stat-val">{{ "{:,.0f}".format(rev_this_year) }}đ</div>
+    <div class="rev-stat-sub">
+      <i class="fa-solid fa-calendar-days"></i> Năm tài khóa 2026
+    </div>
+  </div>
+
+  <!-- 4: ALL TIME -->
+  <div class="rev-stat-card">
+    <div class="rev-stat-title">Tổng doanh thu toàn bộ</div>
+    <div class="rev-stat-val" style="color: var(--primary);">{{ "{:,.0f}".format(total_revenue) }}đ</div>
+    <div class="rev-stat-sub" style="color: var(--admin-text-muted);">
+      Tất cả các đơn đã tạo
+    </div>
+  </div>
+</div>
+
+<!-- DATE RANGE FILTER -->
+<form method="GET" action="/admin/revenue" class="date-filter-form">
+  <div class="date-input-group">
+    <span>Từ ngày:</span>
+    <input type="date" name="from_date" value="{{ from_date or '' }}">
+  </div>
+  <div class="date-input-group">
+    <span>Đến ngày:</span>
+    <input type="date" name="to_date" value="{{ to_date or '' }}">
+  </div>
+  <button type="submit" class="btn-admin-primary" style="padding: 6px 14px; font-size: 12.5px;">
+    <i class="fa-solid fa-filter"></i> Lọc dữ liệu
+  </button>
+  <a href="/admin/revenue" class="btn-admin-secondary" style="padding: 6px 12px; font-size: 12.5px;">
+    Đặt lại
+  </a>
+</form>
+
+<!-- CHART CARD -->
+<div class="admin-card">
+  <div class="admin-card-header">
+    <div>
+      <h3 class="card-title">Biểu đồ Doanh thu (VND)</h3>
+      <p class="page-subtitle" style="margin-top: 2px;">Trực quan hóa doanh số bán hàng theo các tháng</p>
+    </div>
+  </div>
+  <div style="position: relative; height: 320px; width: 100%;">
+    <canvas id="revenueDetailedChart"></canvas>
+  </div>
+</div>
+
+<!-- REVENUE ORDERS TABLE -->
+<div class="admin-card">
+  <div class="admin-card-header">
+    <div>
+      <h3 class="card-title">Lịch sử đơn hàng ghi nhận doanh thu</h3>
+      <p class="page-subtitle" style="margin-top: 2px;">Danh sách các đơn hàng hoàn tất thanh toán đóng góp vào doanh thu
+      </p>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Mã đơn</th>
+          <th>Khách hàng</th>
+          <th>Hình thức thanh toán</th>
+          <th>Doanh số thực tế</th>
+          <th>Thời gian thanh toán</th>
+          <th style="text-align: right;">Xem</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if revenue_orders and revenue_orders|length > 0 %}
+        {% for o in revenue_orders %}
+        <tr>
+          <td>
+            <strong style="color: #111111;">{{ o.order_code }}</strong>
+          </td>
+          <td>
+            <strong>{{ o.customer_name }}</strong>
+            <div style="font-size: 11.5px; color: var(--admin-text-muted);">{{ o.customer_phone }}</div>
+          </td>
+          <td>
+            <span class="status-badge neutral">{{ o.payment_method }}</span>
+          </td>
+          <td>
+            <strong style="color: #10B981; font-size: 14px;">+{{ "{:,.0f}".format(o.total_amount) }}đ</strong>
+          </td>
+          <td style="color: var(--admin-text-muted); font-size: 12px;">
+            {{ o.created_at }}
+          </td>
+          <td style="text-align: right;">
+            <a href="/admin/orders?search={{ o.order_code }}" class="btn-admin-secondary"
+              style="padding: 4px 8px; font-size: 12px;">
+              <i class="fa-solid fa-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 36px; color: var(--admin-text-muted);">
+            Không có đơn hàng phát sinh doanh thu trong khoảng thời gian này.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script id="admin-revenue-data" type="application/json">
+  {
+    "labels": {{ chart_labels | tojson }},
+    "dataValues": {{ chart_values | tojson }}
+  }
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const ctx = document.getElementById('revenueDetailedChart');
+    if (ctx) {
+      const revData = JSON.parse(document.getElementById('admin-revenue-data').textContent || '{}');
+      const labels = revData.labels || [];
+      const dataValues = revData.dataValues || [];
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Doanh thu (VND)',
+            data: dataValues,
+            backgroundColor: '#111111',
+            hoverBackgroundColor: '#FF4D30',
+            borderRadius: 6,
+            maxBarThickness: 45
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function (ctx) {
+                  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(ctx.parsed.y);
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false }
+            },
+            y: {
+              grid: { color: '#F3F4F6' },
+              ticks: {
+                callback: function (val) {
+                  return (val / 1000000).toFixed(1) + ' Tr';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

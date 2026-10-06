@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} | Evern — Fashion AI Stylist{% endblock %}
+
+{% block content %}
+<div class="pdp-page-wrapper">
+  <!-- BREADCRUMB NAVIGATION -->
+  <div class="breadcrumb-container">
+    <div class="breadcrumb-inner">
+      <a href="/">Trang chủ</a>
+      <span class="bc-sep">/</span>
+      <a href="/#liveSection">{{ product.category|capitalize }}</a>
+      <span class="bc-sep">/</span>
+      <span class="bc-current">{{ product.name }}</span>
+    </div>
+  </div>
+
+  <!-- MAIN PRODUCT DETAIL CONTAINER (Owen / Atino Style) -->
+  <section class="pdp-main-section">
+    <div class="pdp-container">
+      <!-- LEFT: GALLERY COLUMN -->
+      <div class="pdp-gallery-wrap">
+        <!-- Vertical Thumbnails Strip -->
+        <!-- Vertical Thumbnails Strip (Chỉ hiển thị khi có từ 2 ảnh trở lên) -->
+        <div class="pdp-thumbs-col" id="pdpThumbsCol" {% if product.gallery_images|length <= 1 %}style="display: none;"{% endif %}>
+          <button class="pdp-thumb-arrow" id="btnThumbUp" title="Ảnh trước" aria-label="Ảnh trước">
+            <i class="fa-solid fa-angle-up"></i>
+          </button>
+          <div class="pdp-thumb-list-wrap" id="pdpThumbList">
+            {% for img in product.gallery_images %}
+            <div class="pdp-thumb-item {% if loop.first %}active{% endif %}" data-img="{{ img }}">
+              <img src="{{ img }}" alt="{{ product.name }} ảnh {{ loop.index }}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='/static/images/placeholder.jpg';">
+            </div>
+            {% endfor %}
+          </div>
+          <button class="pdp-thumb-arrow" id="btnThumbDown" title="Ảnh tiếp theo" aria-label="Ảnh tiếp theo">
+            <i class="fa-solid fa-angle-down"></i>
+          </button>
+        </div>
+
+        <!-- Main Showcase Box -->
+        <div class="pdp-main-stage" {% if product.gallery_images|length <= 1 %}style="width: 100%;"{% endif %}>
+          <div class="pdp-main-stage-box">
+            <!-- Brand Watermark at Top -->
+            <div class="pdp-watermark">Evern</div>
+
+            <!-- Left & Right Chevrons -->
+            {% if product.gallery_images|length > 1 %}
+            <button class="pdp-nav-chevron prev" id="btnPdpPrev" aria-label="Ảnh trước">
+              <i class="fa-solid fa-angle-left"></i>
+            </button>
+            {% endif %}
+
+            <div class="pdp-main-img-holder">
+              <img id="pdpMainImg" src="{{ product.gallery_images[0] if product.gallery_images else (product.image_url if product.image_url else '/static/images/placeholder.jpg') }}" alt="{{ product.name }}" fetchpriority="high" decoding="async" onerror="this.onerror=null; this.src='/static/images/placeholder.jpg';">
+            </div>
+
+            {% if product.gallery_images|length > 1 %}
+            <button class="pdp-nav-chevron next" id="btnPdpNext" aria-label="Ảnh tiếp theo">
+              <i class="fa-solid fa-angle-right"></i>
+            </button>
+            {% endif %}
+
+            <!-- Bottom Product Code Tag -->
+            <div class="pdp-product-code-tag">
+              EVERN {{ product.category|upper }} | {{ "%04d"|format(product.id) }}
+            </div>
+          </div>
+
+          <!-- Zoom Link Below -->
+          <div class="pdp-zoom-link" id="btnZoomLink" onclick="window.open(document.getElementById('pdpMainImg').src, '_blank');">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Click xem hình lớn hơn</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: PRODUCT INFO & ORDER COLUMN -->
+      <div class="pdp-info-col">
+        <h1 class="pdp-title">{{ product.name }}</h1>
+        <div class="pdp-status-stock">Còn hàng</div>
+
+        <div class="pdp-divider-dotted"></div>
+
+        <div class="pdp-price">
+          {{ "{:,.0f}".format(product.price) }}đ
+        </div>
+
+        <!-- COLOR SELECTION -->
+        <div class="pdp-subheading">
+          MÀU SẮC: <span id="pdpSelectedColorLabel" style="font-weight: 500; font-size: 13px; color: #4B5563; text-transform: none;">{{ product.color or "Kem / Be" }}</span>
+        </div>
+        <div class="pdp-colors-wrap" id="pdpColorsWrap">
+          {% if product.color %}
+            <div class="pdp-color-swatch active" style="background: #1C1C1C;" data-name="{{ product.color }}" title="Màu {{ product.color }}"></div>
+            <div class="pdp-color-swatch" style="background: #E8DFD3;" data-name="Kem / Be" title="Màu Kem / Be"></div>
+            <div class="pdp-color-swatch" style="background: #FFFFFF; border: 1px solid #D1D5DB;" data-name="Trắng" title="Màu Trắng"></div>
+          {% else %}
+            <div class="pdp-color-swatch active" style="background: #E8DFD3;" data-name="Kem / Be" title="Màu Kem / Be"></div>
+            <div class="pdp-color-swatch" style="background: #FFFFFF; border: 1px solid #D1D5DB;" data-name="Trắng" title="Màu Trắng"></div>
+            <div class="pdp-color-swatch" style="background: #1C1C1C;" data-name="Đen" title="Màu Đen"></div>
+          {% endif %}
+        </div>
+
+        <!-- SIZE SELECTION -->
+        <div class="pdp-size-header-row">
+          <span class="pdp-subheading" style="margin-bottom: 0;">
+            KÍCH THƯỚC: <span id="pdpSelectedSizeLabel" style="font-weight: 500; font-size: 13px; color: #4B5563; text-transform: none;">L</span>
+          </span>
+          <span class="pdp-size-guide-btn" onclick="UI.showToast('Bảng size: S (45-55kg) · M (55-65kg) · L (65-75kg) · XL (75-85kg) · 2XL (>85kg)', '📏')">
+            Hướng Dẫn Chọn Size
+          </span>
+        </div>
+        <div class="pdp-sizes-row" id="pdpSizesWrap">
+          {% set size_list = product.sizes.split(',') if product.sizes else ['2XL', 'XL', 'L', 'M'] %}
+          {% for s in size_list %}
+            <button type="button" class="pdp-size-box {% if s|trim == 'L' or (loop.first and 'L' not in size_list) %}active{% endif %}" data-size="{{ s|trim }}">
+              {{ s|trim }}
+            </button>
+          {% endfor %}
+        </div>
+
+        <!-- QUANTITY STEPPER -->
+        <div class="pdp-qty-stepper">
+          <button type="button" class="pdp-qty-btn" id="btnQtyMinus" aria-label="Giảm số lượng">−</button>
+          <input type="text" class="pdp-qty-input" id="pdpQtyInput" value="1" readonly aria-label="Số lượng">
+          <button type="button" class="pdp-qty-btn" id="btnQtyPlus" aria-label="Tăng số lượng">+</button>
+        </div>
+
+        <!-- ACTION BUTTONS (ADD TO CART & BUY NOW) -->
+        <div class="pdp-action-buttons">
+          <button type="button" class="btn-pdp-cart" id="btnAddToCart">
+            THÊM VÀO GIỎ HÀNG
+          </button>
+          <button type="button" class="btn-pdp-buy" id="btnBuyNow">
+            MUA NGAY
+          </button>
+        </div>
+
+        <!-- WISHLIST -->
+        <button type="button" class="btn-pdp-wishlist" id="btnPdpWishlist" data-id="{{ product.id }}">
+          <i class="fa-regular fa-heart"></i>
+          <span id="btnWishlistText">YÊU THÍCH</span>
+        </button>
+
+        <!-- SHARE -->
+        <div class="pdp-share-row">
+          <span>CHIA SẺ</span>
+          <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url }}" target="_blank" rel="noopener" class="pdp-fb-circle" title="Chia sẻ Facebook">
+            <i class="fa-brands fa-facebook-f"></i>
+          </a>
+        </div>
+
+        <!-- STORE AVAILABILITY BOX -->
+        <div class="pdp-stores-box">
+          <div class="pdp-stores-header">Cửa hàng còn sản phẩm này</div>
+          <div class="pdp-stores-select-wrap">
+            <select class="pdp-stores-select" id="pdpCitySelect">
+              <option value="all">- Tỉnh thành -</option>
+              <option value="Hà Nội" selected>Hà Nội</option>
+              <option value="TP.HCM">TP. Hồ Chí Minh</option>
+              <option value="Đà Nẵng">Đà Nẵng</option>
+            </select>
+          </div>
+          <div class="pdp-stores-list" id="pdpStoresList">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       RELATED PRODUCTS SECTION (SẢN PHẨM LIÊN QUAN)
+       ======================================================================== -->
+  <section class="related-products-section">
+    <div class="related-header-bar">
+      <div class="related-title-wrap">
+        <h2 class="related-title">SẢN PHẨM LIÊN QUAN</h2>
+        <p class="related-subtitle">Gợi ý outfit đồng điệu cho phong cách của bạn</p>
+      </div>
+      <a href="/#liveSection" class="btn-view-all-related">
+        Xem tất cả sản phẩm
+        <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <div class="related-grid">
+      {% for rel in related_products %}
+      <div class="fashion-card">
+        <div class="card-media-wrap">
+          <span class="card-badge-style">{{ rel.category|upper }}</span>
+          <button class="btn-wishlist" aria-label="Lưu sản phẩm" title="Lưu vào yêu thích" data-id="{{ rel.id }}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </button>
+          <a href="/product/{{ rel.id }}" style="display: block; width: 100%; height: 100%;" onclick="if (typeof Products !== 'undefined') { Products.navigate('/product/{{ rel.id }}'); return false; }" onmouseenter="if (typeof Products !== 'undefined') Products.prefetch('/product/{{ rel.id }}')">
+            <img src="{{ rel.image_url if rel.image_url else '/static/images/placeholder.jpg' }}" alt="{{ rel.name }}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='/static/images/placeholder.jpg';">
+          </a>
+        </div>
+        <div class="card-content-area">
+          <h3 class="card-title">
+            <a href="/product/{{ rel.id }}" style="color: inherit; text-decoration: none;" onclick="if (typeof Products !== 'undefined') { Products.navigate('/product/{{ rel.id }}'); return false; }" onmouseenter="if (typeof Products !== 'undefined') Products.prefetch('/product/{{ rel.id }}')">{{ rel.name }}</a>
+          </h3>
+          <div class="card-price-row">
+            <span class="card-price">{{ "{:,.0f}".format(rel.price) }}đ</span>
+            {% if rel.price > 600000 %}
+              <span class="card-old-price">{{ "{:,.0f}".format(rel.price * 1.2) }}đ</span>
+            {% endif %}
+          </div>
+          <div class="card-action-bar">
+            <a href="/product/{{ rel.id }}" class="btn-card-action view" style="text-decoration: none; text-align: center; display: inline-flex; align-items: center; justify-content: center;" onclick="if (typeof Products !== 'undefined') { Products.navigate('/product/{{ rel.id }}'); return false; }" onmouseenter="if (typeof Products !== 'undefined') Products.prefetch('/product/{{ rel.id }}')">
+              Chi tiết
+            </a>
+            <button class="btn-card-action favorite" type="button" data-id="{{ rel.id }}" title="Lưu vào yêu thích">
+              <i class="fa-regular fa-heart"></i>
+              <span>Yêu thích</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<!-- PRODUCT EMBEDDED DATA FOR CLIENT-SIDE SCRIPTS -->
+<script id="product-detail-data" type="application/json">
+  {
+    "id": {{ product.id }},
+    "name": {{ product.name|tojson }},
+    "code": {{ (product.code or "")|tojson }},
+    "price": {{ product.price }},
+    "color": {{ (product.color or "Kem / Be")|tojson }},
+    "image_url": {{ (product.image_url or "")|tojson }},
+    "category": {{ (product.category or "")|tojson }}
+  }
+</script>
+
+<!-- INLINE PAGE SCRIPT FOR PDP LOGIC -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const currentProductData = JSON.parse(document.getElementById('product-detail-data').textContent || '{}');
+  // Gallery thumbnails & slider
+  const thumbs = document.querySelectorAll('.pdp-thumb-item');
+  const mainImg = document.getElementById('pdpMainImg');
+  const btnPrev = document.getElementById('btnPdpPrev');
+  const btnNext = document.getElementById('btnPdpNext');
+  const btnUp = document.getElementById('btnThumbUp');
+  const btnDown = document.getElementById('btnThumbDown');
+
+  let activeIndex = 0;
+  const thumbList = Array.from(thumbs);
+
+  const selectIndex = (idx) => {
+    activeIndex = (idx + thumbList.length) % thumbList.length;
+    thumbList.forEach((t, i) => t.classList.toggle('active', i === activeIndex));
+    const targetSrc = thumbList[activeIndex].dataset.img;
+    mainImg.style.opacity = '0.3';
+    setTimeout(() => {
+      mainImg.src = targetSrc;
+      mainImg.style.opacity = '1';
+    }, 120);
+    if (thumbList[activeIndex]) {
+      thumbList[activeIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  };
+
+  thumbList.forEach((t, i) => {
+    t.addEventListener('click', () => selectIndex(i));
+  });
+
+  if (btnPrev) btnPrev.addEventListener('click', () => selectIndex(activeIndex - 1));
+  if (btnNext) btnNext.addEventListener('click', () => selectIndex(activeIndex + 1));
+  if (btnUp) btnUp.addEventListener('click', () => selectIndex(activeIndex - 1));
+  if (btnDown) btnDown.addEventListener('click', () => selectIndex(activeIndex + 1));
+
+  // Color selection
+  const colorLabel = document.getElementById('pdpSelectedColorLabel');
+  let selectedColor = document.querySelector('.pdp-color-swatch.active')?.dataset.name || currentProductData.color || 'Kem / Be';
+  const swatches = document.querySelectorAll('.pdp-color-swatch');
+  swatches.forEach(sw => {
+    sw.addEventListener('click', () => {
+      swatches.forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+      selectedColor = sw.dataset.name || 'Mặc định';
+      if (colorLabel) colorLabel.textContent = selectedColor;
+      UI.showToast(`Đã chọn màu: ${selectedColor}`, '✦');
+    });
+  });
+
+  // Size selection
+  const sizeLabel = document.getElementById('pdpSelectedSizeLabel');
+  let selectedSize = document.querySelector('.pdp-size-box.active')?.dataset.size || 'L';
+  if (sizeLabel) sizeLabel.textContent = selectedSize;
+  const sizeBoxes = document.querySelectorAll('.pdp-size-box');
+  sizeBoxes.forEach(sb => {
+    sb.addEventListener('click', () => {
+      sizeBoxes.forEach(b => b.classList.remove('active'));
+      sb.classList.add('active');
+      selectedSize = sb.dataset.size || 'L';
+      if (sizeLabel) sizeLabel.textContent = selectedSize;
+      UI.showToast(`Đã chọn kích cỡ: ${selectedSize}`, '📏');
+    });
+  });
+
+  // Quantity stepper
+  let qty = 1;
+  const qtyInput = document.getElementById('pdpQtyInput');
+  const btnMinus = document.getElementById('btnQtyMinus');
+  const btnPlus = document.getElementById('btnQtyPlus');
+
+  if (btnMinus) {
+    btnMinus.addEventListener('click', () => {
+      if (qty > 1) {
+        qty--;
+        qtyInput.value = qty;
+      }
+    });
+  }
+
+  if (btnPlus) {
+    btnPlus.addEventListener('click', () => {
+      qty++;
+      qtyInput.value = qty;
+    });
+  }
+
+  // Cart & Buy Buttons
+
+  const btnCart = document.getElementById('btnAddToCart');
+  if (btnCart) {
+    btnCart.addEventListener('click', () => {
+      if (!window.IS_LOGGED_IN) {
+        if (typeof UI !== 'undefined' && UI.showToast) {
+          UI.showToast('Vui lòng đăng nhập để thêm vào giỏ hàng!', '🔒');
+        }
+        setTimeout(() => {
+          window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
+        }, 800);
+        return;
+      }
+      if (typeof Cart !== 'undefined') {
+        Cart.addItem(currentProductData, selectedSize, selectedColor, qty);
+      } else {
+        UI.showToast(`Đã thêm ${qty}x ${currentProductData.name} vào giỏ hàng!`, '🛍️');
+      }
+    });
+  }
+
+  // MUA NGAY: Mua riêng 1 sản phẩm, hoàn toàn tách biệt với Giỏ hàng
+  const btnBuy = document.getElementById('btnBuyNow');
+  if (btnBuy) {
+    btnBuy.addEventListener('click', () => {
+      // Lưu sản phẩm vào mục Mua Ngay riêng (không thêm vào giỏ hàng chung)
+      if (typeof Cart !== 'undefined') {
+        Cart.setBuyNowItem(currentProductData, selectedSize, selectedColor, qty);
+      }
+
+      if (!window.IS_LOGGED_IN) {
+        if (typeof UI !== 'undefined' && UI.showToast) {
+          UI.showToast('Vui lòng đăng nhập để tiến hành mua ngay!', '🔒');
+        }
+        setTimeout(() => {
+          window.location.href = `/login?next=${encodeURIComponent('/checkout?mode=buy_now')}`;
+        }, 800);
+        return;
+      }
+
+      window.location.href = '/checkout?mode=buy_now';
+    });
+  }
+
+  // Wishlist Button
+  const btnWishlist = document.getElementById('btnPdpWishlist');
+  if (btnWishlist) {
+    if (typeof Products !== 'undefined' && Products.getSavedIds) {
+      if (Products.getSavedIds().includes(currentProductData.id)) {
+        btnWishlist.classList.add('active');
+        const txt = document.getElementById('btnWishlistText');
+        if (txt) txt.textContent = 'ĐÃ LƯU';
+      }
+    }
+
+    btnWishlist.addEventListener('click', () => {
+      if (typeof Products !== 'undefined') {
+        Products.toggleWishlist(currentProductData, btnWishlist);
+        const isSaved = Products.getSavedIds().includes(currentProductData.id);
+        const txt = document.getElementById('btnWishlistText');
+        if (txt) txt.textContent = isSaved ? 'ĐÃ LƯU' : 'YÊU THÍCH';
+      }
+    });
+  }
+
+  // Related products wishlist buttons
+  document.querySelectorAll('.related-grid .btn-wishlist').forEach(btn => {
+    const id = parseInt(btn.dataset.id, 10);
+    if (typeof Products !== 'undefined' && Products.getSavedIds) {
+      if (Products.getSavedIds().includes(id)) {
+        btn.classList.add('active');
+      }
+    }
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const cardTitle = btn.closest('.fashion-card')?.querySelector('.card-title')?.textContent.trim() || 'Sản phẩm';
+      if (typeof Products !== 'undefined') {
+        Products.toggleWishlist({ id: id, name: cardTitle }, btn);
+      }
+    });
+  });
+
+  // Related products favorite action buttons
+  document.querySelectorAll('.related-grid .btn-card-action.favorite').forEach(btn => {
+    const id = parseInt(btn.dataset.id, 10);
+    if (typeof Products !== 'undefined' && Products.getSavedIds) {
+      if (Products.getSavedIds().includes(id)) {
+        btn.classList.add('active');
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = 'fa-solid fa-heart';
+        const txt = btn.querySelector('span');
+        if (txt) txt.textContent = 'Đã lưu';
+      }
+    }
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const cardTitle = btn.closest('.fashion-card')?.querySelector('.card-title')?.textContent.trim() || 'Sản phẩm';
+      if (typeof Products !== 'undefined') {
+        Products.toggleWishlist({ id: id, name: cardTitle }, btn);
+      }
+    });
+  });
+
+  // Store branches population
+  const stores = [
+    { city: 'Hà Nội', name: 'L2-19 Vincom Ocean Park 1, HN, MB_CH38', phone: '0967284444', addr: 'L2-19/VMM Ocean Park 1, HN' },
+    { city: 'Hà Nội', name: 'L2-24 Vincom Smart City, HN, MB_CH39', phone: '0967284444', addr: 'L2-24 Vincom Smart City, Đại Mỗ' },
+    { city: 'Hà Nội', name: 'Tòa nhà Viwaseen, 48 Phố Tố Hữu, Nam Từ Liêm', phone: '1900 8079', addr: 'Tầng 17 Viwaseen, Nam Từ Liêm' },
+    { city: 'TP.HCM', name: '186A Nam Kỳ Khởi Nghĩa, Phường Xuân Hòa, Q.3', phone: '0967284444', addr: '186A Nam Kỳ Khởi Nghĩa, TP.HCM' },
+    { city: 'Đà Nẵng', name: 'Vincom Plaza Ngô Quyền, Sơn Trà, Đà Nẵng', phone: '0912345678', addr: 'Tầng 1 Vincom Plaza, Đà Nẵng' }
+  ];
+
+  const citySelect = document.getElementById('pdpCitySelect');
+  const storesListEl = document.getElementById('pdpStoresList');
+
+  const renderStores = (selectedCity) => {
+    if (!storesListEl) return;
+    const filtered = (selectedCity === 'all')
+      ? stores
+      : stores.filter(s => s.city.includes(selectedCity) || selectedCity.includes(s.city));
+
+    storesListEl.innerHTML = filtered.map(s => `
+      <div class="pdp-store-item">
+        <div class="pdp-store-name">
+          <i class="fa-solid fa-location-dot" style="font-size: 11px; margin-top: 3px; color: #111;"></i>
+          <span>${s.name}:</span>
+        </div>
+        <div class="pdp-store-phone">${s.phone}</div>
+        <div class="pdp-store-stock">
+          ${s.addr} <span class="stock-green">(Còn hàng)</span>
+        </div>
+      </div>
+    `).join('');
+  };
+
+  renderStores('Hà Nội');
+
+  if (citySelect) {
+    citySelect.addEventListener('change', (e) => {
+      renderStores(e.target.value);
+    });
+  }
+});
+
+// Ngữ cảnh sản phẩm hiện tại để Chatbot Stylist nhận diện ngay khi khách hỏi 'mẫu này'
+window.CURRENT_PRODUCT_CONTEXT = JSON.parse(document.getElementById('product-detail-data').textContent || '{}');
+</script>
+{% endblock %}

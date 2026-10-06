@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Đăng Nhập | Evern — Fashion AI Stylist{% endblock %}
+
+{% block content %}
+<div class="auth-page-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-brand-badge">Evern<span class="brand-dot">.</span></div>
+      <h1 class="auth-title">Chào Mừng Trở Lại</h1>
+      <p class="auth-subtitle">Đăng nhập để tiếp tục trải nghiệm định hình phong cách cùng Evern</p>
+    </div>
+
+    {% if error %}
+    <div class="auth-alert-error">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    {% if success %}
+    <div class="auth-alert-success">
+      <i class="fa-solid fa-circle-check"></i>
+      <span>{{ success }}</span>
+    </div>
+    {% endif %}
+
+    <form action="/login" method="POST" class="auth-form">
+      <input type="hidden" name="next" value="{{ next_url or '' }}">
+      <div class="auth-form-group">
+        <label for="username" class="auth-label">Tên đăng nhập hoặc Email</label>
+        <div class="auth-input-wrap">
+          <i class="fa-regular fa-user auth-input-icon"></i>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            class="auth-input" 
+            placeholder="Nhập username hoặc email..." 
+            value="{{ username or '' }}"
+            required
+            autofocus
+          >
+        </div>
+      </div>
+
+      <div class="auth-form-group">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <label for="password" class="auth-label">Mật khẩu</label>
+          <a href="javascript:void(0)" onclick="alert('Vui lòng liên hệ hotline/admin để được cấp lại mật khẩu.');" style="font-size: 11.5px; color: var(--text-muted); text-decoration: underline;">Quên mật khẩu?</a>
+        </div>
+        <div class="auth-input-wrap">
+          <i class="fa-solid fa-lock auth-input-icon"></i>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            class="auth-input" 
+            placeholder="Nhập mật khẩu..." 
+            required
+          >
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary auth-submit-btn">
+        Đăng Nhập Ngay
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+    </form>
+
+    <div class="auth-footer-link">
+      Chưa có tài khoản? <a href="/register{% if next_url %}?next={{ next_url }}{% endif %}">Đăng ký thành viên mới</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

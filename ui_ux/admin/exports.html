@@ -1,0 +1,277 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Quản lý Phiếu xuất kho | Evern. Admin{% endblock %}
+{% block breadcrumb %}Phiếu xuất kho{% endblock %}
+
+{% block content %}
+<!-- PAGE HEADER -->
+<div class="page-header-row">
+  <div>
+    <h1 class="page-title">Quản lý Phiếu Xuất Kho</h1>
+    <p class="page-subtitle">Kiểm soát xuất hàng bán sỉ, luân chuyển chi nhánh hoặc xuất hủy hàng mẫu, tự động trừ số
+      lượng tồn kho.</p>
+  </div>
+  <div class="page-actions-group">
+    <button type="button" class="btn-admin-accent" onclick="openAdminModal('modalCreateExport')">
+      <i class="fa-solid fa-plus"></i> Tạo phiếu xuất kho
+    </button>
+  </div>
+</div>
+
+<!-- DATA CARD -->
+<div class="admin-card">
+  <!-- TOOLBAR -->
+  <div class="table-toolbar">
+    <div class="search-input-wrap">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="exportSearch" class="search-input"
+        placeholder="Tìm theo mã phiếu PX, lý do xuất hoặc người tạo..." onkeyup="filterExports()">
+    </div>
+
+    <div style="font-size: 13px; color: var(--admin-text-muted);">
+      Tổng số: <strong>{{ exports|length }}</strong> phiếu xuất
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-responsive">
+    <table class="admin-table" id="exportsTable">
+      <thead>
+        <tr>
+          <th>Mã phiếu</th>
+          <th>Lý do xuất kho</th>
+          <th style="text-align: center;">Tổng số lượng</th>
+          <th>Người tạo phiếu</th>
+          <th>Thời gian xuất</th>
+          <th>Ghi chú</th>
+          <th style="text-align: right;">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if exports and exports|length > 0 %}
+        {% for exp in exports %}
+        <tr>
+          <td>
+            <strong style="color: #111111; font-size: 13.5px;">{{ exp.receipt_code }}</strong>
+          </td>
+          <td>
+            <strong style="color: #4B5563;">{{ exp.reason }}</strong>
+          </td>
+          <td style="text-align: center;">
+            <span class="status-badge danger">-{{ exp.total_quantity }} chiếc</span>
+          </td>
+          <td>
+            <span class="status-badge neutral">{{ exp.created_by or 'Admin' }}</span>
+          </td>
+          <td style="color: var(--admin-text-muted); font-size: 12px;">
+            {{ exp.created_at[:16] if exp.created_at else '' }}
+          </td>
+          <td style="color: var(--admin-text-muted); font-size: 12px; max-width: 220px;">
+            {{ exp.notes or '—' }}
+          </td>
+          <td style="text-align: right;">
+            <button type="button" class="btn-admin-secondary" style="padding: 5px 10px; font-size: 12px;"
+              onclick="viewExportDetail({{ exp.id }})" title="Xem chi tiết hàng xuất">
+              <i class="fa-solid fa-eye"></i> Chi tiết
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 40px; color: var(--admin-text-muted);">
+            Chưa có phiếu xuất kho nào được tạo.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL: CREATE EXPORT RECEIPT -->
+<div class="admin-modal-backdrop" id="modalCreateExport">
+  <div class="admin-modal" style="max-width: 600px;">
+    <div class="admin-modal-header">
+      <h3 class="modal-title">Tạo Phiếu Xuất Hàng Khỏi Kho</h3>
+      <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalCreateExport')">&times;</button>
+    </div>
+    <form action="/admin/exports/create" method="POST" onsubmit="return validateExport()">
+      <div class="admin-modal-body">
+        <div class="form-group">
+          <label class="form-label">Lý do xuất kho <span style="color: #EF4444;">*</span></label>
+          <select name="reason" class="form-select" required>
+            <option value="Xuất bán sỉ / Đối tác">Xuất bán sỉ / Đại lý phân phối</option>
+            <option value="Điều chuyển cửa hàng">Điều chuyển chi nhánh / Cửa hàng</option>
+            <option value="Hàng mẫu chụp ảnh Lookbook">Xuất hàng mẫu chụp ảnh / Stylist</option>
+            <option value="Xuất hủy hàng lỗi">Xuất hủy hàng lỗi / Hư hỏng</option>
+            <option value="Lý do khác">Lý do khác</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Chọn sản phẩm xuất kho <span style="color: #EF4444;">*</span></label>
+          <select name="product_id" id="expProductSelect" class="form-select" required onchange="checkMaxStock()">
+            <option value="">-- Chọn sản phẩm thời trang --</option>
+            {% for p in products %}
+            <option value="{{ p.id }}" data-stock="{{ p.stock or 0 }}">{{ p.name }} (Trong kho còn: {{ p.stock or 0
+              }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Số lượng xuất (chiếc) <span style="color: #EF4444;">*</span></label>
+            <input type="number" name="quantity" id="expQty" class="form-input" placeholder="Ví dụ: 5" min="1" required
+              oninput="checkMaxStock()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Người lập phiếu</label>
+            <input type="text" name="created_by" class="form-input"
+              value="{{ current_user.full_name or current_user.username or 'Admin' }}" readonly
+              style="background: #F9FAFB;">
+          </div>
+        </div>
+
+        <div id="stockAlert"
+          style="display: none; background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626; border-radius: 8px; padding: 10px 14px; font-size: 12.5px; margin-bottom: 16px;">
+          <i class="fa-solid fa-triangle-exclamation"></i> <span id="stockAlertText">Số lượng xuất vượt quá tồn kho hiện
+            có!</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Ghi chú phiếu xuất</label>
+          <textarea name="notes" class="form-textarea" rows="2"
+            placeholder="Ghi chú người nhận, mục đích xuất hoặc biên bản..."></textarea>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin-secondary" onclick="closeAdminModal('modalCreateExport')">Hủy</button>
+        <button type="submit" class="btn-admin-accent" id="btnSubmitExport">
+          <i class="fa-solid fa-check"></i> Xác nhận xuất kho
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: VIEW EXPORT DETAIL -->
+<div class="admin-modal-backdrop" id="modalExportDetail">
+  <div class="admin-modal">
+    <div class="admin-modal-header">
+      <h3 class="modal-title" id="expDetailCode">Chi tiết phiếu xuất kho</h3>
+      <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalExportDetail')">&times;</button>
+    </div>
+    <div class="admin-modal-body" id="modalExportDetailBody">
+      <div style="text-align: center; padding: 24px;">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; color: var(--primary);"></i>
+      </div>
+    </div>
+    <div class="admin-modal-footer">
+      <button type="button" class="btn-admin-secondary" onclick="closeAdminModal('modalExportDetail')">Đóng</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function checkMaxStock() {
+    const sel = document.getElementById('expProductSelect');
+    const opt = sel.options[sel.selectedIndex];
+    const alertBox = document.getElementById('stockAlert');
+    const alertText = document.getElementById('stockAlertText');
+    const submitBtn = document.getElementById('btnSubmitExport');
+    const qtyInput = document.getElementById('expQty');
+
+    if (!opt || !opt.value) return;
+
+    const available = parseInt(opt.getAttribute('data-stock') || '0', 10);
+    const requested = parseInt(qtyInput.value || '0', 10);
+
+    if (requested > available) {
+      alertBox.style.display = 'block';
+      alertText.textContent = `Số lượng xuất (${requested}) vượt quá tồn kho hiện có (${available} chiếc)!`;
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.5';
+    } else {
+      alertBox.style.display = 'none';
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+    }
+  }
+
+  function validateExport() {
+    const sel = document.getElementById('expProductSelect');
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt || !opt.value) return false;
+    const available = parseInt(opt.getAttribute('data-stock') || '0', 10);
+    const requested = parseInt(document.getElementById('expQty').value || '0', 10);
+    if (requested > available) {
+      alert(`Số lượng xuất không thể vượt quá ${available} chiếc!`);
+      return false;
+    }
+    return true;
+  }
+
+  function filterExports() {
+    const q = document.getElementById('exportSearch').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#exportsTable tbody tr');
+    rows.forEach(r => {
+      const text = r.textContent.toLowerCase();
+      r.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
+  }
+
+  async function viewExportDetail(exportId) {
+    const modalBody = document.getElementById('modalExportDetailBody');
+    modalBody.innerHTML = `
+      <div style="text-align: center; padding: 24px;">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; color: var(--primary);"></i>
+      </div>
+    `;
+    openAdminModal('modalExportDetail');
+
+    try {
+      const res = await fetch(`/api/admin/exports/${exportId}`);
+      if (!res.ok) throw new Error('Lỗi khi tải thông tin phiếu');
+      const data = await res.json();
+      const r = data.receipt;
+      const items = data.items || [];
+
+      document.getElementById('expDetailCode').textContent = `Phiếu xuất #${r.receipt_code}`;
+
+      modalBody.innerHTML = `
+        <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 13px;">
+          <p><strong>Lý do xuất:</strong> ${r.reason}</p>
+          <p><strong>Người lập:</strong> ${r.created_by || 'Admin'}</p>
+          <p><strong>Ngày xuất:</strong> ${r.created_at || '—'}</p>
+          ${r.notes ? `<p style="margin-top: 4px; color: #6B7280;"><strong>Ghi chú:</strong> "${r.notes}"</p>` : ''}
+        </div>
+
+        <h4 style="font-size: 13.5px; font-weight: 700; margin-bottom: 10px;">Chi tiết sản phẩm đã xuất</h4>
+        <div style="margin-bottom: 16px;">
+          ${items.map(it => `
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F3F4F6;">
+              <div>
+                <strong>${it.product_name}</strong>
+              </div>
+              <div style="font-weight: 700; color: #EF4444;">
+                -${it.quantity} chiếc
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #E5E7EB; padding-top: 10px;">
+          <strong>Tổng số lượng xuất:</strong>
+          <strong style="color: #EF4444; font-size: 16px;">-${r.total_quantity} chiếc</strong>
+        </div>
+      `;
+    } catch (err) {
+      modalBody.innerHTML = `<div style="color: #EF4444; padding: 16px;">Lỗi: ${err.message}</div>`;
+    }
+  }
+</script>
+{% endblock %}

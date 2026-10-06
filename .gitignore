@@ -1,0 +1,26 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Large AI model files (>100MB cannot be pushed to GitHub)
+*.gguf
+*.bin
+*.pt
+*.pth
+*.onnx
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE & Editor settings
+.vscode/
+.idea/
+
+# Temporary / Scratch
+scratch/
+*.log

@@ -1,0 +1,311 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Quản lý Người dùng | Evern. Admin{% endblock %}
+{% block breadcrumb %}Người dùng & Phân quyền{% endblock %}
+
+{% block content %}
+<!-- PAGE HEADER -->
+<div class="page-header-row">
+  <div>
+    <h1 class="page-title">Quản lý Tài khoản & Phân quyền</h1>
+    <p class="page-subtitle">Quản lý danh sách khách hàng, nhân viên bán hàng và thiết lập vai trò quản trị hệ thống.
+    </p>
+  </div>
+  <div class="page-actions-group">
+    <button type="button" class="btn-admin-accent" onclick="openAddUserModal()">
+      <i class="fa-solid fa-user-plus"></i> Thêm tài khoản mới
+    </button>
+  </div>
+</div>
+
+<!-- DATA CARD -->
+<div class="admin-card">
+  <!-- TOOLBAR -->
+  <div class="table-toolbar">
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; flex: 1;">
+      <div class="search-input-wrap">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="userSearch" class="search-input" placeholder="Tìm theo tên, username, email hoặc SĐT..."
+          onkeyup="filterUsers()">
+      </div>
+
+      <select id="filterRole" class="select-filter" onchange="filterUsers()">
+        <option value="">Tất cả vai trò</option>
+        <option value="admin">Quản trị viên (Admin)</option>
+        <option value="staff">Nhân viên (Staff)</option>
+        <option value="customer">Khách hàng (Customer)</option>
+      </select>
+
+      <select id="filterStatus" class="select-filter" onchange="filterUsers()">
+        <option value="">Tất cả trạng thái</option>
+        <option value="active">Đang hoạt động</option>
+        <option value="locked">Bị khóa</option>
+      </select>
+    </div>
+
+    <div style="font-size: 13px; color: var(--admin-text-muted);">
+      Tổng số: <strong>{{ users|length }}</strong> tài khoản
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-responsive">
+    <table class="admin-table" id="usersTable">
+      <thead>
+        <tr>
+          <th>Người dùng</th>
+          <th>Liên hệ</th>
+          <th>Địa chỉ giao hàng</th>
+          <th style="text-align: center;">Vai trò</th>
+          <th style="text-align: center;">Trạng thái</th>
+          <th>Ngày tham gia</th>
+          <th style="text-align: right;">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if users and users|length > 0 %}
+        {% for u in users %}
+        <tr data-role="{{ u.role or 'customer' }}" data-status="{{ u.status or 'active' }}">
+          <td>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div
+                style="width: 38px; height: 38px; border-radius: 50%; background: #111111; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0;">
+                {{ u.username[:1]|upper }}
+              </div>
+              <div>
+                <div style="font-weight: 700; color: #111111; font-size: 13.5px;">{{ u.full_name or u.username }}</div>
+                <div style="font-size: 12px; color: var(--admin-text-muted);">@{{ u.username }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div style="font-size: 13px;">{{ u.email }}</div>
+            <div style="font-size: 12px; color: var(--admin-text-muted);">{{ u.phone or 'Chưa cập nhật' }}</div>
+          </td>
+          <td style="max-width: 220px; font-size: 12.5px; color: var(--admin-text-muted);">
+            {% if u.address or u.city %}
+            {{ u.address or '' }}{% if u.city %}, {{ u.city }}{% endif %}
+            {% else %}
+            —
+            {% endif %}
+          </td>
+          <td style="text-align: center;">
+            {% if u.role == 'admin' %}
+            <span class="status-badge danger" style="background: #FEE2E2; color: #991B1B;">
+              <i class="fa-solid fa-shield-halved"></i> Admin
+            </span>
+            {% elif u.role == 'staff' %}
+            <span class="status-badge info">
+              <i class="fa-solid fa-id-badge"></i> Nhân viên
+            </span>
+            {% else %}
+            <span class="status-badge neutral">
+              <i class="fa-regular fa-user"></i> Khách hàng
+            </span>
+            {% endif %}
+          </td>
+          <td style="text-align: center;">
+            {% if u.status == 'locked' %}
+            <span class="status-badge danger">
+              <i class="fa-solid fa-lock"></i> Bị khóa
+            </span>
+            {% else %}
+            <span class="status-badge success">
+              <i class="fa-solid fa-circle-check"></i> Hoạt động
+            </span>
+            {% endif %}
+          </td>
+          <td style="color: var(--admin-text-muted); font-size: 12px;">
+            {{ u.created_at[:10] if u.created_at else '—' }}
+          </td>
+          <td style="text-align: right; white-space: nowrap;">
+            <!-- TOGGLE LOCK STATUS -->
+            <form action="/admin/users/toggle-status/{{ u.id }}" method="POST" style="display: inline-block;">
+              <button type="submit" class="btn-admin-secondary" style="padding: 6px 10px; font-size: 12px;"
+                title="{% if u.status == 'locked' %}Mở khóa tài khoản{% else %}Khóa tài khoản{% endif %}" {% if
+                current_user and current_user.id==u.id %}disabled style="opacity: 0.5; cursor: not-allowed;" {% endif
+                %}>
+                {% if u.status == 'locked' %}
+                <i class="fa-solid fa-lock-open" style="color: #10B981;"></i> Mở khóa
+                {% else %}
+                <i class="fa-solid fa-lock" style="color: #F59E0B;"></i> Khóa
+                {% endif %}
+              </button>
+            </form>
+
+            <!-- EDIT -->
+            <button type="button" class="btn-admin-secondary btn-edit-user"
+              style="padding: 6px 10px; font-size: 12px; margin-left: 4px;"
+              data-user='{{ u|tojson|safe }}'
+              onclick="openEditUserModal(JSON.parse(this.dataset.user))"
+              title="Chỉnh sửa tài khoản">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+
+            <!-- DELETE -->
+            {% if not (current_user and current_user.id == u.id) %}
+            <form action="/admin/users/delete/{{ u.id }}" method="POST" style="display: inline-block;"
+              onsubmit="return confirm('Bạn có chắc muốn xóa tài khoản {{ u.username }}? Hành động này sẽ xóa các lịch sử liên quan.');">
+              <button type="submit" class="btn-admin-secondary"
+                style="padding: 6px 10px; font-size: 12px; color: #EF4444; margin-left: 4px;" title="Xóa">
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 40px; color: var(--admin-text-muted);">
+            Không có người dùng nào.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL: ADD USER -->
+<div class="admin-modal-backdrop" id="modalAddUser">
+  <div class="admin-modal">
+    <div class="admin-modal-header">
+      <h3 class="modal-title">Tạo tài khoản người dùng mới</h3>
+      <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalAddUser')">&times;</button>
+    </div>
+    <form action="/admin/users/add" method="POST">
+      <div class="admin-modal-body">
+        <div class="form-group">
+          <label class="form-label">Họ và tên <span style="color: #EF4444;">*</span></label>
+          <input type="text" name="full_name" class="form-input" placeholder="Ví dụ: Nguyễn Văn A" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tên đăng nhập <span style="color: #EF4444;">*</span></label>
+            <input type="text" name="username" class="form-input" placeholder="nguyenvana" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email <span style="color: #EF4444;">*</span></label>
+            <input type="email" name="email" class="form-input" placeholder="a@gmail.com" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Số điện thoại</label>
+            <input type="tel" name="phone" class="form-input" placeholder="0912 345 678">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Vai trò phân quyền <span style="color: #EF4444;">*</span></label>
+            <select name="role" class="form-select" required>
+              <option value="customer">Khách hàng (Customer)</option>
+              <option value="staff">Nhân viên (Staff)</option>
+              <option value="admin">Quản trị viên (Admin)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mật khẩu khởi tạo <span style="color: #EF4444;">*</span></label>
+          <input type="password" name="password" class="form-input" placeholder="Ít nhất 6 ký tự" required
+            minlength="6">
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin-secondary" onclick="closeAdminModal('modalAddUser')">Hủy</button>
+        <button type="submit" class="btn-admin-accent">Tạo tài khoản</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: EDIT USER -->
+<div class="admin-modal-backdrop" id="modalEditUser">
+  <div class="admin-modal">
+    <div class="admin-modal-header">
+      <h3 class="modal-title">Chỉnh sửa thông tin tài khoản</h3>
+      <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalEditUser')">&times;</button>
+    </div>
+    <form id="formEditUser" method="POST">
+      <div class="admin-modal-body">
+        <div class="form-group">
+          <label class="form-label">Họ và tên</label>
+          <input type="text" name="full_name" id="editUserFullName" class="form-input" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" id="editUserEmail" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Số điện thoại</label>
+            <input type="tel" name="phone" id="editUserPhone" class="form-input">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Vai trò</label>
+            <select name="role" id="editUserRole" class="form-select" required>
+              <option value="customer">Khách hàng (Customer)</option>
+              <option value="staff">Nhân viên (Staff)</option>
+              <option value="admin">Quản trị viên (Admin)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Trạng thái</label>
+            <select name="status" id="editUserStatus" class="form-select" required>
+              <option value="active">Đang hoạt động</option>
+              <option value="locked">Khóa tài khoản</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Đổi mật khẩu mới (để trống nếu không đổi)</label>
+          <input type="password" name="new_password" class="form-input"
+            placeholder="Nhập mật khẩu mới nếu muốn đặt lại">
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin-secondary" onclick="closeAdminModal('modalEditUser')">Hủy</button>
+        <button type="submit" class="btn-admin-primary">Cập nhật thay đổi</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function openAddUserModal() {
+    openAdminModal('modalAddUser');
+  }
+
+  function openEditUserModal(u) {
+    document.getElementById('formEditUser').action = `/admin/users/edit/${u.id}`;
+    document.getElementById('editUserFullName').value = u.full_name || '';
+    document.getElementById('editUserEmail').value = u.email || '';
+    document.getElementById('editUserPhone').value = u.phone || '';
+    document.getElementById('editUserRole').value = u.role || 'customer';
+    document.getElementById('editUserStatus').value = u.status || 'active';
+    openAdminModal('modalEditUser');
+  }
+
+  function filterUsers() {
+    const q = document.getElementById('userSearch').value.toLowerCase().trim();
+    const roleFilter = document.getElementById('filterRole').value;
+    const statusFilter = document.getElementById('filterStatus').value;
+    const rows = document.querySelectorAll('#usersTable tbody tr');
+
+    rows.forEach(r => {
+      const text = r.textContent.toLowerCase();
+      const rRole = r.getAttribute('data-role') || 'customer';
+      const rStatus = r.getAttribute('data-status') || 'active';
+
+      let matchSearch = !q || text.includes(q);
+      let matchRole = !roleFilter || rRole === roleFilter;
+      let matchStatus = !statusFilter || rStatus === statusFilter;
+
+      r.style.display = (matchSearch && matchRole && matchStatus) ? '' : 'none';
+    });
+  }
+</script>
+{% endblock %}

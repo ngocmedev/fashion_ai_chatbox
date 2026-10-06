@@ -1,0 +1,210 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Quản lý Danh mục sản phẩm | Evern. Admin{% endblock %}
+{% block breadcrumb %}Danh mục sản phẩm{% endblock %}
+
+{% block content %}
+<!-- PAGE HEADER -->
+<div class="page-header-row">
+  <div>
+    <h1 class="page-title">Danh mục sản phẩm</h1>
+    <p class="page-subtitle">Phân loại cấu trúc sản phẩm thời trang và tối ưu hóa điều hướng khách hàng.</p>
+  </div>
+  <div class="page-actions-group">
+    <button type="button" class="btn-admin-accent" onclick="openAddModal()">
+      <i class="fa-solid fa-plus"></i> Thêm danh mục mới
+    </button>
+  </div>
+</div>
+
+<!-- DATA CARD -->
+<div class="admin-card">
+  <!-- TOOLBAR -->
+  <div class="table-toolbar">
+    <div class="search-input-wrap">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="categorySearch" class="search-input" placeholder="Tìm kiếm tên danh mục hoặc mã slug..."
+        onkeyup="filterCategories()">
+    </div>
+    <span style="font-size: 13px; color: var(--admin-text-muted);">
+      Tổng số: <strong>{{ categories|length }}</strong> danh mục
+    </span>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-responsive">
+    <table class="admin-table" id="categoriesTable">
+      <thead>
+        <tr>
+          <th style="width: 60px;">ID</th>
+          <th>Tên danh mục</th>
+          <th>Đường dẫn (Slug)</th>
+          <th style="text-align: center;">Số sản phẩm</th>
+          <th style="text-align: center;">Đã bán</th>
+          <th style="text-align: right;">Doanh thu</th>
+          <th style="text-align: right;">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if categories and categories|length > 0 %}
+        {% for cat in categories %}
+        <tr>
+          <td style="color: var(--admin-text-muted); font-weight: 700;">#{{ cat.id }}</td>
+          <td>
+            <strong style="color: #111111; font-size: 14px;">{{ cat.name }}</strong>
+            {% if cat.description %}
+            <div style="font-size: 11.5px; color: var(--admin-text-muted); margin-top: 2px;">{{ cat.description }}</div>
+            {% endif %}
+          </td>
+          <td>
+            <code
+              style="background: #F3F4F6; padding: 2px 8px; border-radius: 4px; font-size: 12px; color: #4B5563;">{{ cat.slug }}</code>
+          </td>
+          <td style="text-align: center;">
+            <a href="/admin/products?category_id={{ cat.id }}" class="status-badge info" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px;" title="Bấm để xem danh sách sản phẩm">
+              <i class="fa-solid fa-boxes-stacked" style="font-size: 11px;"></i>
+              <span>{{ cat.product_count }} sản phẩm</span>
+            </a>
+          </td>
+          <td style="text-align: center;">
+            <span style="font-weight: 600; color: #374151; font-size: 13px;">
+              {{ cat.total_sold or 0 }} cái
+            </span>
+          </td>
+          <td style="text-align: right;">
+            <strong style="color: #FF4D30; font-size: 13.5px;">
+              {{ "{:,.0f}".format(cat.total_revenue or 0) }}đ
+            </strong>
+          </td>
+          <td style="text-align: right; white-space: nowrap;">
+            <a href="/admin/products?category_id={{ cat.id }}" class="btn-admin-secondary" style="padding: 6px 10px; font-size: 12px; text-decoration: none; margin-right: 4px;" title="Xem sản phẩm">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+            <button type="button" class="btn-admin-secondary" style="padding: 6px 10px; font-size: 12px;"
+              onclick="openEditModal({{ cat.id }}, '{{ cat.name }}', '{{ cat.slug }}', '{{ cat.description or '' }}')"
+              title="Chỉnh sửa">
+              <i class="fa-solid fa-pen-to-square"></i> Sửa
+            </button>
+            <form action="/admin/categories/delete/{{ cat.id }}" method="POST" style="display: inline-block;"
+              onsubmit="return confirm('Bạn có chắc chắn muốn xóa danh mục \'{{ cat.name }}\'?');">
+              <button type="submit" class="btn-admin-secondary"
+                style="padding: 6px 10px; font-size: 12px; color: #EF4444; margin-left: 4px;" title="Xóa">
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+          <td colspan="7" style="text-align: center; padding: 36px; color: var(--admin-text-muted);">
+            Chưa có danh mục nào. Bấm "Thêm danh mục mới" để bắt đầu.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL: ADD CATEGORY -->
+<div class="admin-modal-backdrop" id="modalAddCategory">
+  <div class="admin-modal">
+    <div class="admin-modal-header">
+      <h3 class="modal-title">Thêm danh mục sản phẩm mới</h3>
+      <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalAddCategory')">&times;</button>
+    </div>
+    <form action="/admin/categories/add" method="POST">
+      <div class="admin-modal-body">
+        <div class="form-group">
+          <label class="form-label">Tên danh mục <span style="color: #EF4444;">*</span></label>
+          <input type="text" name="name" id="addCatName" class="form-input" placeholder="Ví dụ: Áo len & Dệt kim"
+            required onkeyup="autoSlug(this.value, 'addCatSlug')">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Slug (Đường dẫn tĩnh) <span style="color: #EF4444;">*</span></label>
+          <input type="text" name="slug" id="addCatSlug" class="form-input" placeholder="ao-len-det-kim" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mô tả danh mục</label>
+          <textarea name="description" class="form-textarea" rows="3"
+            placeholder="Mô tả phong cách và đối tượng sản phẩm thuộc danh mục này..."></textarea>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin-secondary"
+          onclick="closeAdminModal('modalAddCategory')">Hủy</button>
+        <button type="submit" class="btn-admin-accent">Lưu danh mục</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: EDIT CATEGORY -->
+<div class="admin-modal-backdrop" id="modalEditCategory">
+  <div class="admin-modal">
+    <div class="admin-modal-header">
+      <h3 class="modal-title">Chỉnh sửa danh mục</h3>
+      <button type="button" class="btn-modal-close" onclick="closeAdminModal('modalEditCategory')">&times;</button>
+    </div>
+    <form id="formEditCategory" method="POST">
+      <div class="admin-modal-body">
+        <div class="form-group">
+          <label class="form-label">Tên danh mục <span style="color: #EF4444;">*</span></label>
+          <input type="text" name="name" id="editCatName" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Slug (Đường dẫn tĩnh) <span style="color: #EF4444;">*</span></label>
+          <input type="text" name="slug" id="editCatSlug" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mô tả danh mục</label>
+          <textarea name="description" id="editCatDesc" class="form-textarea" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button type="button" class="btn-admin-secondary"
+          onclick="closeAdminModal('modalEditCategory')">Hủy</button>
+        <button type="submit" class="btn-admin-primary">Cập nhật thay đổi</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function openAddModal() {
+    document.getElementById('addCatName').value = '';
+    document.getElementById('addCatSlug').value = '';
+    openAdminModal('modalAddCategory');
+  }
+
+  function openEditModal(id, name, slug, desc) {
+    document.getElementById('formEditCategory').action = `/admin/categories/edit/${id}`;
+    document.getElementById('editCatName').value = name;
+    document.getElementById('editCatSlug').value = slug;
+    document.getElementById('editCatDesc').value = desc;
+    openAdminModal('modalEditCategory');
+  }
+
+  function autoSlug(text, targetId) {
+    const slug = text.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-');
+    document.getElementById(targetId).value = slug;
+  }
+
+  function filterCategories() {
+    const q = document.getElementById('categorySearch').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#categoriesTable tbody tr');
+    rows.forEach(r => {
+      const text = r.textContent.toLowerCase();
+      r.style.display = text.includes(q) ? '' : 'none';
+    });
+  }
+</script>
+{% endblock %}

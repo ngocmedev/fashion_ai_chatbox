@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Evern — Tìm outfit hợp gu của bạn | Gen Z Style Advisor{% endblock %}
+
+{% block content %}
+<section class="hero-ambient-slider-section" id="heroSlider">
+  <!-- Synchronized Ambient Blurred Dual Backdrop (Hardware-accelerated cross-fade) -->
+  <div class="slider-backdrop-ambient">
+    <div class="backdrop-layer layer-a active" id="sliderBackdropA"
+      style="background-image: url('/static/images/banners/banner1.jpg');">
+    </div>
+    <div class="backdrop-layer layer-b" id="sliderBackdropB"></div>
+  </div>
+  <div class="slider-backdrop-overlay"></div>
+
+  <!-- Main Content Container -->
+  <div class="slider-viewport-wrap">
+    <div class="slider-frame-bordered">
+      <div class="slider-track" id="heroSliderTrack">
+        <!-- Slide 1 (Evern Premium 2026) -->
+        <div class="slider-slide active"
+          data-bg="/static/images/banners/banner1.jpg">
+          <a href="/products" class="slider-slide-link" aria-label="Bộ sưu tập Evern Premium 2026">
+            <img src="/static/images/banners/banner1.jpg"
+              alt="Bộ sưu tập Evern Premium 2026" class="slider-slide-img" fetchpriority="high" decoding="async" onerror="this.onerror=null; this.src='/static/images/placeholder.jpg';">
+          </a>
+        </div>
+        <!-- Slide 2 (Modern Transition) -->
+        <div class="slider-slide" data-bg="/static/images/banners/banner2.jpg">
+          <a href="/products" class="slider-slide-link" aria-label="Modern Transition Collection">
+            <img src="/static/images/banners/banner2.jpg"
+              alt="Bộ sưu tập Modern Transition" class="slider-slide-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='/static/images/placeholder.jpg';">
+          </a>
+        </div>
+        <!-- Slide 3 (Polo & Sơ Mi) -->
+        <div class="slider-slide" data-bg="/static/images/banners/banner3.jpg">
+          <a href="/products?category=áo" class="slider-slide-link" aria-label="Áo Polo & Sơ Mi Đẳng Cấp">
+            <img src="/static/images/banners/banner3.jpg"
+              alt="Áo Polo và Sơ mi công sở" class="slider-slide-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='/static/images/placeholder.jpg';">
+          </a>
+        </div>
+        <!-- Slide 4 (Suit & Blazer) -->
+        <div class="slider-slide" data-bg="/static/images/banners/banner4.jpg">
+          <a href="/products?category=áo" class="slider-slide-link" aria-label="Áo Blazer & Suit May Đo">
+            <img src="/static/images/banners/banner4.jpg"
+              alt="Blazer và Suit quý ông" class="slider-slide-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='/static/images/placeholder.jpg';">
+          </a>
+        </div>
+        <!-- Slide 5 (New Arrivals) -->
+        <div class="slider-slide" data-bg="/static/images/banners/banner5.jpg">
+          <a href="/products" class="slider-slide-link" aria-label="New Arrivals 2026">
+            <img src="/static/images/banners/banner5.jpg"
+              alt="Xu hướng mới Evern 2026" class="slider-slide-img" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='/static/images/placeholder.jpg';">
+          </a>
+        </div>
+      </div>
+
+      <!-- Glassic Navigation Buttons (Matching Image 2) -->
+      <button class="btn-glassic-nav btn-glassic-prev" id="btnSliderPrev" aria-label="Slide trước">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
+      <button class="btn-glassic-nav btn-glassic-next" id="btnSliderNext" aria-label="Slide kế tiếp">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+
+      <!-- Dot Indicators (Matching Image 1) -->
+      <div class="slider-dots-bar" id="sliderDotsBar">
+        <button class="slider-dot active" data-index="0" aria-label="Slide 1"></button>
+        <button class="slider-dot" data-index="1" aria-label="Slide 2"></button>
+        <button class="slider-dot" data-index="2" aria-label="Slide 3"></button>
+        <button class="slider-dot" data-index="3" aria-label="Slide 4"></button>
+        <button class="slider-dot" data-index="4" aria-label="Slide 5"></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main class="main-experience">
+  <!-- Featured Categories Grid (Inspired by Owen) -->
+  <section class="featured-categories-section">
+    <div class="section-head-bar">
+      <h3 class="section-title">Danh Mục Nổi Bật</h3>
+      <span class="section-meta-text">Định hình phong cách hiện đại</span>
+    </div>
+    <div class="categories-grid">
+      <div class="category-card" onclick="Chat.sendPrompt('Tìm áo sơ mi công sở')">
+        <div class="category-icon-box">
+          <i class="fa-solid fa-shirt"></i>
+        </div>
+        <h4 class="category-name">Áo Sơ Mi</h4>
+        <p class="category-desc">Chất liệu kháng nhăn, phom dáng chuẩn mực lịch lãm</p>
+      </div>
+      <div class="category-card" onclick="Chat.sendPrompt('Tìm áo thun và polo')">
+        <div class="category-icon-box">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />
+          </svg>
+        </div>
+        <h4 class="category-name">Áo Polo & T-Shirt</h4>
+        <p class="category-desc">Sợi thoáng mát, mềm mại, năng động mỗi ngày</p>
+      </div>
+      <div class="category-card" onclick="Chat.sendPrompt('Tìm áo blazer và suit')">
+        <div class="category-icon-box">
+          <i class="fa-solid fa-user-tie"></i>
+        </div>
+        <h4 class="category-name">Áo Blazer & Suit</h4>
+        <p class="category-desc">Cắt may tinh xảo, tôn vinh phong thái đỉnh đạt</p>
+      </div>
+      <div class="category-card" onclick="Chat.sendPrompt('Tìm quần âu và jeans')">
+        <div class="category-icon-box">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2h12v4l-2 15h-3l-1-10-1 10H8L6 6V2z" />
+            <line x1="6" y1="6" x2="18" y2="6" />
+          </svg>
+        </div>
+        <h4 class="category-name">Quần Âu & Jeans</h4>
+        <p class="category-desc">Độ co giãn hoàn hảo, hack dáng và thoải mái di chuyển</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live Recommendations Section -->
+  <section id="liveSection">
+    <div class="section-head-bar">
+      <h3 class="section-title" id="liveRecommendationsTitle">Sản phẩm gợi ý cho bạn</h3>
+      <span class="section-meta-text" id="liveRecommendationsMeta">Đang nạp gợi ý...</span>
+    </div>
+    <div class="products-feed-grid" id="liveRecommendationsGrid">
+      <!-- Populated by JavaScript -->
+    </div>
+  </section>
+
+  <!-- ========================================================================
+         AMBIENT BRAND VIDEO 1: OWEN 18 YEARS CAMPAIGN
+         Seamless ambient video: Autoplays on scroll into view, pauses on scroll out, restarts from 0
+         ======================================================================== -->
+  <section class="ambient-video-section">
+    <div class="ambient-video-container">
+      <video class="ambient-scroll-video" muted loop playsinline preload="metadata" tabindex="-1" aria-hidden="true">
+        <source src="https://owen.cdn.vccloud.vn/media/amasty/ampromobanners/OWEN_18_YEAR.mp4" type="video/mp4">
+      </video>
+    </div>
+  </section>
+
+  <!-- Brand Trust & Perks Bar -->
+  <section class="brand-perks-bar">
+    <div class="perk-item">
+      <div class="perk-icon-circle">
+        <i class="fa-solid fa-truck-fast"></i>
+      </div>
+      <div>
+        <h4 class="perk-title">Miễn Phí Vận Chuyển</h4>
+        <p class="perk-desc">Giao hàng hỏa tốc toàn quốc cho đơn từ 500K</p>
+      </div>
+    </div>
+    <div class="perk-item">
+      <div class="perk-icon-circle">
+        <i class="fa-solid fa-arrow-rotate-left"></i>
+      </div>
+      <div>
+        <h4 class="perk-title">Đổi Hàng Linh Hoạt</h4>
+        <p class="perk-desc">Hỗ trợ đổi size & mẫu miễn phí trong 30 ngày</p>
+      </div>
+    </div>
+    <div class="perk-item">
+      <div class="perk-icon-circle">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+      </div>
+      <div>
+        <h4 class="perk-title">AI Stylist Thông Minh</h4>
+        <p class="perk-desc">Tư vấn phối đồ và chuẩn hóa size cá nhân 24/7</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trending Right Now Section -->
+  <section class="trending-social-box" id="trendingSection">
+    <div class="section-head-bar">
+      <div>
+        <h3 class="section-title">Đang được Gen Z săn</h3>
+        <p class="section-meta-text">12.4K lượt yêu thích tuần này • Xu hướng thịnh hành</p>
+      </div>
+    </div>
+
+    <!-- Trending Hashtags Cloud -->
+    <div class="trending-tags-cloud">
+      <button class="hashtag-pill" onclick="Chat.sendPrompt('Tìm outfit phong cách #streetwear')">#streetwear</button>
+      <button class="hashtag-pill" onclick="Chat.sendPrompt('Gợi ý phong cách #minimalist')">#minimalist</button>
+      <button class="hashtag-pill" onclick="Chat.sendPrompt('Outfit mặc hàng ngày #dailyfit')">#dailyfit</button>
+      <button class="hashtag-pill"
+        onclick="Chat.sendPrompt('Trang phục mùa hè thoáng mát #summerfit')">#summerfit</button>
+      <button class="hashtag-pill" onclick="Chat.sendPrompt('Đồ đi làm thanh lịch #smartcasual')">#smartcasual</button>
+    </div>
+
+    <!-- Trending Grid -->
+    <div class="products-feed-grid" id="trendingGrid">
+      <!-- Populated by JavaScript -->
+    </div>
+  </section>
+
+  <!-- ========================================================================
+         SPLIT PROMO & AMBIENT MOTION VIDEO SECTION (Inspired by Owen.vn)
+         Left: Owen Campaign Image + Frosted Newsletter Card
+         Right: Ambient Video 2 (Autoplay on scroll, pauses on exit, restarts from 0)
+         Placed at the very end after Trending Section
+         ======================================================================== -->
+  <section class="split-promo-section">
+    <div class="split-promo-grid">
+      <!-- Left Column: Background Image with Centered Frosted Newsletter Card -->
+      <div class="split-promo-left">
+        <div class="frosted-newsletter-card">
+          <h3 class="frosted-title">ĐĂNG KÝ NHẬN KHUYẾN MÃI</h3>
+          <p class="frosted-desc">Đừng bỏ lỡ hàng ngàn sản phẩm và chương trình siêu hấp dẫn</p>
+          <form class="frosted-form"
+            onsubmit="event.preventDefault(); if (typeof UI !== 'undefined' && UI.showToast) { UI.showToast('Cảm ơn bạn đã đăng ký nhận khuyến mãi!', '✨'); } this.reset();">
+            <input type="email" class="frosted-input" placeholder="Nhập email của bạn" required>
+            <button type="submit" class="frosted-btn">Đăng ký</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right Column: Seamless Ambient Video -->
+      <div class="split-promo-right">
+        <video class="ambient-scroll-video split-video" muted loop playsinline preload="metadata" tabindex="-1"
+          aria-hidden="true">
+          <source src="https://owen.cdn.vccloud.vn/media/amasty/ampromobanners/video_email_8.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}
